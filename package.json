@@ -7,13 +7,26 @@
     "setup:server": "cd server && npm install",
     "setup:client": "cd client && npm install",
     "server:start": "cd server && npm start",
-    "client:start": "cd client && npm start"
+    "client:start": "cd client && npm start",
+    "lint:client": "cd client && npm run lint",
+    "lint:server": "cd server && npm run lint",
+    "prepare": "husky"
   },
   "keywords": [],
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.8.0",
     "ts-node": "^10.9.2"
+  },
+  "lint-staged": {
+    "client/**/*.{js,jsx,ts,tsx}": [
+      "npm run lint:client"
+    ],
+    "server/**/*.ts": [
+      "npm run lint:server"
+    ]
   }
 }
