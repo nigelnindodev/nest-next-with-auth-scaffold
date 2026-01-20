@@ -9,6 +9,6 @@ async function bootstrap() {
       colors: process.env.NODE_ENV === 'production' ? false : true,
     }),
   });
-  await app.listen(process.env.PORT ?? 3333);
+  await app.listen(process.env.PORT ?? 5000);
 }
 bootstrap();
