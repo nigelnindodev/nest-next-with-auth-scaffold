@@ -1,22 +1,32 @@
 {
   "name": "xborg",
+  "author": "Nigel Nindo",
   "version": "1.0.0",
   "scripts": {
     "setup": "npm run setup:server && npm run setup:client",
     "setup:server": "cd server && npm install",
     "setup:client": "cd client && npm install",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server:start": "cd server && npm start",
+    "client:start": "cd client && npm start",
+    "lint:client": "cd client && npm run lint",
+    "lint:server": "cd server && npm run lint",
+    "prepare": "husky"
   },
   "keywords": [],
-  "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "eslint": "^9.39.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.8.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.0"
+    "ts-node": "^10.9.2"
+  },
+  "lint-staged": {
+    "client/**/*.{js,jsx,ts,tsx}": [
+      "npm run lint:client"
+    ],
+    "server/**/*.ts": [
+      "npm run lint:server"
+    ]
   }
 }
