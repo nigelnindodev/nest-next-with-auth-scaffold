@@ -17,7 +17,7 @@ on:
 jobs:
   ci:
     name: Client CI
-    uses: ./.github/workflows/reusable-node-ci.yml
+    uses: ./.github/workflows/node-ci.yml
     with:
       working-directory: client
       node-version: '22.x'
