@@ -6,17 +6,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppConfigModule } from './config/config.module';
 import { AppConfigService } from './config';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     AppConfigModule,
     TypeOrmModule.forRootAsync({
-      imports: [AppConfigModule],
       inject: [AppConfigService],
       useFactory: (configService: AppConfigService) =>
         configService.typeOrmConfig,
     }),
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
