@@ -6,6 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppConfigModule } from './config/config.module';
 import { AppConfigService } from './config';
+import { AuthModule } from './auth/auth.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -16,7 +18,19 @@ import { AppConfigService } from './config';
       useFactory: (configService: AppConfigService) =>
         configService.typeOrmConfig,
     }),
+    ClientsModule.registerAsync([
+      {
+        name: 'USER_SERVICE',
+        imports: [AppConfigModule],
+        inject: [AppConfigService],
+        useFactory: (configService: AppConfigService) => ({
+          transport: Transport.REDIS,
+          options: configService.redisMicroserviceConfig,
+        }),
+      },
+    ]),
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -24,6 +24,17 @@ export class AppConfigService extends ConfigService {
     };
   }
 
+  get httpPort(): number {
+    return this.get<number>('HTTP_PORT', 5000);
+  }
+
+  get redisMicroserviceConfig(): { host: string; port: number } {
+    return {
+      host: this.get<string>('REDIS_HOST', 'localhost'),
+      port: this.get<number>('REDIS_PORT', 6379),
+    };
+  }
+
   get isDevelopment() {
     return this.get('NODE_ENV') === 'development';
   }

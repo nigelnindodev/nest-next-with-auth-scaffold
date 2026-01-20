@@ -28,5 +28,8 @@
     "server/**/*.ts": [
       "npm run lint:server"
     ]
+  },
+  "dependencies": {
+    "ioredis": "^5.9.2"
   }
 }
