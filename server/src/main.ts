@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ConsoleLogger, Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppConfigService } from './config';
 
@@ -14,9 +14,13 @@ async function bootstrap() {
     }),
   });
 
-  /**
-   * Some httpApp configuration coming up probably i.e CORS, cookier parsing, ...
-   */
+  httpApp.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   const configService = httpApp.get(AppConfigService);
   const httpPort = configService.httpPort;
