@@ -7,7 +7,7 @@ import {
   RedisContext,
 } from '@nestjs/microservices';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto, UpdateUserResponse } from '../dto/update-user.dto';
+import { UpdateUserDto, UpdateUserResponseDto } from '../dto/update-user.dto';
 
 @Controller('users-microservice')
 export class UsersMicroserviceController {
@@ -30,7 +30,7 @@ export class UsersMicroserviceController {
   async handleUpdateUserRequest(
     @Payload() data: UpdateUserDto,
     @Ctx() context: RedisContext,
-  ): Promise<UpdateUserResponse> {
+  ): Promise<UpdateUserResponseDto> {
     this.logger.log(
       `[redis-${context.getChannel()}] Received request to update user: `,
       data,
@@ -38,6 +38,7 @@ export class UsersMicroserviceController {
     return Promise.resolve({
       email: 'placeholder@email.com',
       externalId: 'placeholder_external_id',
+      meta: { version: 1, description: 'placeholder, description' },
     });
   }
 }
