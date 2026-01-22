@@ -19,7 +19,9 @@ export class AppConfigService extends ConfigService {
       type: 'postgres',
       ...this.database,
       autoLoadEntities: true,
-      synchronize: this.get('NODE_ENV') !== 'production', // watch out here!
+      // synchronize: this.get('NODE_ENV') !== 'production'
+      // let;s keep it simple for now and use synchronize true
+      synchronize: true,
       logging: this.get('NODE_ENV') === 'development',
     };
   }

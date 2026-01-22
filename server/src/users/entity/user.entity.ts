@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  Entity,
   Generated,
   Index,
   PrimaryGeneratedColumn,
@@ -12,6 +13,7 @@ export interface UserMeta {
   description?: string;
 }
 
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
