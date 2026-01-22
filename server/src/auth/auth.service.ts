@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OAuthStrategyService } from './strategies/strategy.service';
 import { randomBytes } from 'node:crypto';
+import { OAuthProvider } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +13,7 @@ export class AuthService {
     return randomBytes(32).toString('hex');
   }
 
-  initiateOAuth(provider: string): Promise<{ authUrl: string }> {
+  initiateOAuth(provider: OAuthProvider): Promise<{ authUrl: string }> {
     const strategy = this.oAuthStrategyService.getStrategy(provider);
     const state = this.generateState();
 

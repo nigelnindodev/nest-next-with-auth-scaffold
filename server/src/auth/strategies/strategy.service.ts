@@ -1,36 +1,30 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { OAuthStrategy } from './strategy.interface';
 import { GoogleOAuthStrategyService } from './google/google-strategy.service';
+import { OAuthProvider } from '../auth.types';
 
 @Injectable()
 export class OAuthStrategyService {
-  private strategies: Map<string, OAuthStrategy>;
-
   constructor(
     private readonly googleOAuthStrategy: GoogleOAuthStrategyService,
-  ) {
-    this.strategies = new Map([
-      [this.googleOAuthStrategy.providerName, this.googleOAuthStrategy],
-    ]);
+  ) {}
+
+  private assertExhaustive(value: never): never {
+    /**
+     * Wrap never in value as workaround to prevent lint errors
+     * Cannot pass never value to a tmeplate literal
+     */
+    throw new BadRequestException(
+      `Unsupported OAuth provider: ${String(value)}`,
+    );
   }
 
-  getSupportedProviders(): string[] {
-    return Array.from(this.strategies.keys());
-  }
-
-  hasProvider(provider: string): boolean {
-    return this.strategies.has(provider);
-  }
-
-  getStrategy(provider: string): OAuthStrategy {
-    const strategy = this.strategies.get(provider);
-
-    if (!strategy) {
-      throw new BadRequestException(
-        `Unsupported OAuth provider: ${provider} | Supported providers: `,
-      );
+  getStrategy(provider: OAuthProvider): OAuthStrategy {
+    switch (provider) {
+      case OAuthProvider.GOOGLE:
+        return this.googleOAuthStrategy;
+      default:
+        return this.assertExhaustive(provider);
     }
-
-    return strategy;
   }
 }
