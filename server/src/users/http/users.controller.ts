@@ -8,7 +8,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { UpdateUserDto, UpdateUserResponse } from '../dto/update-user.dto';
+import { UpdateUserDto, UpdateUserResponseDto } from '../dto/update-user.dto';
 import { lastValueFrom } from 'rxjs';
 
 @Controller('user')
@@ -30,7 +30,7 @@ export class UsersController {
       'Received request to update user profile with externalId: ',
       updateUserDto.externalId,
     );
-    const result = await lastValueFrom<UpdateUserResponse>(
+    const result = await lastValueFrom<UpdateUserResponseDto>(
       this.userClient.send({ cmd: 'update_user' }, updateUserDto),
     );
 

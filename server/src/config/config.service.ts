@@ -19,7 +19,9 @@ export class AppConfigService extends ConfigService {
       type: 'postgres',
       ...this.database,
       autoLoadEntities: true,
-      synchronize: this.get('NODE_ENV') !== 'production', // watch out here!
+      // synchronize: this.get('NODE_ENV') !== 'production'
+      // let's keep it simple for now and use synchronize true
+      synchronize: true,
       logging: this.get('NODE_ENV') === 'development',
     };
   }
@@ -33,6 +35,26 @@ export class AppConfigService extends ConfigService {
       host: this.get<string>('REDIS_HOST', 'localhost'),
       port: this.get<number>('REDIS_PORT', 6379),
     };
+  }
+
+  get googleOAuthConfiguration() {
+    return {
+      clientId: this.get<string>(
+        'GOOGLE_OAUTH_CLIENT_ID',
+        'SET_GOOGLE_OAUTH_CLIENT_ID',
+      ),
+      clientSecret: this.get<string>(
+        'GOOGLE_OAUTH_CLIENT_SECRET',
+        'SET_GOOGLE_OAUTH_CLIENT_SECRET',
+      ),
+    };
+  }
+
+  get serverBaseUrl() {
+    return this.get<string>(
+      'SERVER_BASE_URL',
+      `http://localhost:${this.httpPort}`,
+    );
   }
 
   get isDevelopment() {

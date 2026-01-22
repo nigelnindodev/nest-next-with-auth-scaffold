@@ -1,16 +1,26 @@
-import { IsEmail, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID, ValidateNested } from 'class-validator';
+import { UserMetaDto } from './create-user.dto';
+import { Exclude, Expose, Type } from 'class-transformer';
 
 export class UpdateUserDto {
   @IsUUID()
   @IsNotEmpty()
   externalId: string;
 
-  @IsEmail()
   @IsNotEmpty()
-  email: string;
+  @ValidateNested()
+  @Type(() => UserMetaDto)
+  meta: UserMetaDto;
 }
 
-export type UpdateUserResponse = {
+@Exclude()
+export class UpdateUserResponseDto {
+  @Expose()
   externalId: string;
+
+  @Expose()
   email: string;
-};
+
+  @Expose()
+  meta: UserMetaDto;
+}
