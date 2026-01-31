@@ -30,7 +30,7 @@ async function bootstrap() {
   const redisMicroservice =
     await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       transport: Transport.REDIS,
-      options: configService.redisMicroserviceConfig,
+      options: configService.redisConfig,
     });
   await redisMicroservice.listen();
   logger.log('Redis microservice started');

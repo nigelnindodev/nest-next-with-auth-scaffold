@@ -1,4 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { UsersRepository } from './users.repository';
+import { CreateUserDto } from './dto/create-user.dto';
+import { User } from './entity/user.entity';
+import { Maybe } from 'true-myth';
 
 @Injectable()
-export class UsersService {}
+export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(private readonly userRepository: UsersRepository) {}
+
+  async createUser(data: CreateUserDto): Promise<Maybe<User>> {
+    const result = await this.userRepository.createUser({
+      ...data,
+      meta: data.meta ?? null,
+    });
+
+    if (result.isErr) {
+      this.logger.error(`Failed to create user: ${result.error.message}`);
+      return Maybe.nothing();
+    }
+
+    return Maybe.of(result.value);
+  }
+
+  async getUser(externalId: string): Promise<Maybe<User>> {
+    return this.userRepository.findByExternalId(externalId);
+  }
+
+  async updateUser(
+    externalId: string,
+    data: Partial<Omit<User, 'email' | 'id' | 'externalId'>>,
+  ): Promise<Maybe<User>> {
+    this.logger.log(`Processing update for user: ${externalId}`);
+    return this.userRepository.updateUser(externalId, data);
+  }
+}

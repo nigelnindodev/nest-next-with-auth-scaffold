@@ -5,9 +5,10 @@ import {
   MessagePattern,
   Payload,
   RedisContext,
+  RpcException,
 } from '@nestjs/microservices';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto, UpdateUserResponseDto } from '../dto/update-user.dto';
+import { User } from '../entity/user.entity';
 
 @Controller('users-microservice')
 export class UsersMicroserviceController {
@@ -16,29 +17,32 @@ export class UsersMicroserviceController {
   constructor(private readonly userService: UsersService) {}
 
   @MessagePattern({ cmd: 'create_user_request' })
-  handleCreateUserRequest(
+  async handleCreateUserRequest(
     @Payload() data: CreateUserDto,
     @Ctx() context: RedisContext,
-  ) {
+  ): Promise<User> {
     this.logger.log(
-      `[redis-${context.getChannel()}] Received request  to create user: `,
-      data,
-    ); // mask sensitive info
-  }
+      `[redis-${context.getChannel()}] Received request to create user with email: `,
+      data.email,
+    );
 
-  @MessagePattern({ cmd: 'update_user_request' })
-  async handleUpdateUserRequest(
-    @Payload() data: UpdateUserDto,
-    @Ctx() context: RedisContext,
-  ): Promise<UpdateUserResponseDto> {
-    this.logger.log(
-      `[redis-${context.getChannel()}] Received request to update user: `,
-      data,
-    ); // mask sensitive info
-    return Promise.resolve({
-      email: 'placeholder@email.com',
-      externalId: 'placeholder_external_id',
-      meta: { version: 1, description: 'placeholder, description' },
+    /**
+     * Handling here should be more robust for other scenarios
+     * - What if user already exists?
+     *
+     * createUser should return a possible errors
+     * custom codes should be in response so that downstream business logic can be run
+     */
+    const result = await this.userService.createUser(data);
+
+    return result.match({
+      Just: (user) => user,
+      Nothing: () => {
+        throw new RpcException({
+          statusCode: 500,
+          message: `Could not create a user with email: ${data.email}`,
+        });
+      },
     });
   }
 }

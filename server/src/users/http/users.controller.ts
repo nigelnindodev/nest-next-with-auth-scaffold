@@ -2,20 +2,21 @@ import {
   Body,
   Controller,
   Get,
-  Inject,
   Logger,
+  NotFoundException,
   Put,
   Req,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { UpdateUserDto, UpdateUserResponseDto } from '../dto/update-user.dto';
-import { lastValueFrom } from 'rxjs';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { UsersService } from '../users.service';
+import { ExternalUserDetailsDto } from '../dto/create-user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('user')
 export class UsersController {
   private readonly logger = new Logger(UsersController.name);
 
-  constructor(@Inject('USER_SERVICE') readonly userClient: ClientProxy) {}
+  constructor(private readonly userService: UsersService) {}
 
   @Get('profile')
   async getUser() {
@@ -30,10 +31,20 @@ export class UsersController {
       'Received request to update user profile with externalId: ',
       updateUserDto.externalId,
     );
-    const result = await lastValueFrom<UpdateUserResponseDto>(
-      this.userClient.send({ cmd: 'update_user' }, updateUserDto),
+
+    const maybeUser = await this.userService.updateUser(
+      updateUserDto.externalId,
+      updateUserDto,
     );
 
-    return result;
+    if (maybeUser.isNothing) {
+      const message = `Update failed. User with external id ${updateUserDto.externalId} not found`;
+      this.logger.warn(message);
+      throw new NotFoundException(message);
+    }
+
+    return plainToInstance(ExternalUserDetailsDto, maybeUser.value, {
+      excludeExtraneousValues: true,
+    });
   }
 }

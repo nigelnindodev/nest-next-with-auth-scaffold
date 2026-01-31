@@ -4,15 +4,15 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AppConfigModule } from './config/config.module';
-import { AppConfigService } from './config';
+import { AppConfigModule, AppConfigService } from './config';
 import { AuthModule } from './auth/auth.module';
+import { RedisModule } from './redis';
 
 @Module({
   imports: [
     AppConfigModule,
     TypeOrmModule.forRootAsync({
-      inject: [AppConfigService],
+      inject: [AppConfigService, RedisModule],
       useFactory: (configService: AppConfigService) =>
         configService.typeOrmConfig,
     }),

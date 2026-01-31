@@ -12,7 +12,7 @@ export class OAuthStrategyService {
   private assertExhaustive(value: never): never {
     /**
      * Wrap never in value as workaround to prevent lint errors
-     * Cannot pass never value to a tmeplate literal
+     * Cannot pass never value to a temeplate literal
      */
     throw new BadRequestException(
       `Unsupported OAuth provider: ${String(value)}`,
