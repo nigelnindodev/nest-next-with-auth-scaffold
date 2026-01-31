@@ -6,6 +6,7 @@ import {
   OAuthUserInfo,
 } from '../strategy.interface';
 import { OAuthProvider } from 'src/auth/auth.types';
+import { Result } from 'true-myth';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 @Injectable()
@@ -31,11 +32,13 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
     throw new Error('Method not implemented.');
   }
 
-  exchangeCodeForTokens(code: string): Promise<OAuthToken> {
+  exchangeCodeForTokens(code: string): Promise<Result<OAuthToken, Error>> {
     throw new Error('Method not implemented.');
   }
 
-  getUserInformation(accessToken: string): Promise<OAuthUserInfo> {
+  getUserInformation(
+    accessToken: string,
+  ): Promise<Result<OAuthUserInfo, Error>> {
     throw new Error('Method not implemented.');
   }
 }

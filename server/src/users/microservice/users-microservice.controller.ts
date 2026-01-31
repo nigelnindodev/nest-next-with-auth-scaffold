@@ -16,31 +16,24 @@ export class UsersMicroserviceController {
 
   constructor(private readonly userService: UsersService) {}
 
-  @MessagePattern({ cmd: 'create_user_request' })
+  @MessagePattern({ cmd: 'get_or_create_user' })
   async handleCreateUserRequest(
     @Payload() data: CreateUserDto,
     @Ctx() context: RedisContext,
   ): Promise<User> {
     this.logger.log(
-      `[redis-${context.getChannel()}] Received request to create user with email: `,
+      `[redis-${context.getChannel()}] Received request to create or get user with email: `,
       data.email,
     );
 
-    /**
-     * Handling here should be more robust for other scenarios
-     * - What if user already exists?
-     *
-     * createUser should return a possible errors
-     * custom codes should be in response so that downstream business logic can be run
-     */
-    const result = await this.userService.createUser(data);
+    const result = await this.userService.getOrCreateUser(data);
 
     return result.match({
       Just: (user) => user,
       Nothing: () => {
         throw new RpcException({
           statusCode: 500,
-          message: `Could not create a user with email: ${data.email}`,
+          message: `Could not get or create a user with email: ${data.email}`,
         });
       },
     });

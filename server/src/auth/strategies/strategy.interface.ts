@@ -1,3 +1,5 @@
+import { Result } from 'true-myth';
+
 export interface OAuthToken {
   accessToken: string;
   refreshToken: string;
@@ -16,7 +18,9 @@ export interface OAuthStrategy {
 
   getAuthorizationUrl(state: string): string;
 
-  exchangeCodeForTokens(code: string): Promise<OAuthToken>;
+  exchangeCodeForTokens(code: string): Promise<Result<OAuthToken, Error>>;
 
-  getUserInformation(accessToken: string): Promise<OAuthUserInfo>;
+  getUserInformation(
+    accessToken: string,
+  ): Promise<Result<OAuthUserInfo, Error>>;
 }

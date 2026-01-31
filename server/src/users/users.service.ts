@@ -28,6 +28,20 @@ export class UsersService {
     return this.userRepository.findByExternalId(externalId);
   }
 
+  async getOrCreateUser({
+    email,
+    name,
+  }: {
+    email: string;
+    name: string;
+  }): Promise<Maybe<User>> {
+    const maybeUser = await this.userRepository.findByEmail(email);
+    return await maybeUser.match({
+      Just: (user) => Promise.resolve(Maybe.of(user)),
+      Nothing: async () => await this.createUser({ email, name }),
+    });
+  }
+
   async updateUser(
     externalId: string,
     data: Partial<Omit<User, 'email' | 'id' | 'externalId'>>,

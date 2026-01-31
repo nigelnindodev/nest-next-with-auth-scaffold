@@ -1,6 +1,7 @@
 import {
   Inject,
   Injectable,
+  InternalServerErrorException,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,7 +12,9 @@ import { RedisService } from 'src/redis';
 import { ClientProxy } from '@nestjs/microservices';
 import { USER_SERVICE } from 'src/constants';
 import { OAuthToken, OAuthUserInfo } from './strategies/strategy.interface';
-//import { lastValueFrom } from 'rxjs';
+import { Result } from 'true-myth';
+import { lastValueFrom } from 'rxjs';
+import { User } from 'src/users/entity/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -73,22 +76,52 @@ export class AuthService {
     const strategy = this.oAuthStrategyService.getStrategy(provider);
 
     this.logger.log(`Exchanging code for tokens with provider: ${provider}`);
-    const tokens: OAuthToken = await strategy.exchangeCodeForTokens(code);
+    const tokenResult: Result<OAuthToken, Error> =
+      await strategy.exchangeCodeForTokens(code);
+    if (tokenResult.isErr) {
+      this.logger.error(
+        `Token exchange failed with provider ${provider}`,
+        tokenResult.error.message,
+      );
+      throw new UnauthorizedException(
+        `Failed to authenticate with provider: ${provider}`,
+      );
+    }
 
     this.logger.log(`Fetching user information from provider: ${provider}`);
-    const userInfo: OAuthUserInfo = await strategy.getUserInformation(
-      tokens.accessToken,
-    );
+    const userInfoResult: Result<OAuthUserInfo, Error> =
+      await strategy.getUserInformation(tokenResult.value.accessToken);
+    if (userInfoResult.isErr) {
+      this.logger.error(
+        `Failed to retrieve user information from provider: ${provider}`,
+      );
+      throw new UnauthorizedException(
+        'Failed to retrieve user information from provider',
+      );
+    }
 
-    /*const user = await lastValueFrom(
-      this.usersClient.send(
-        { cmd: 'get_or_create_user' },
-        { email: userInfo.email },
-      ),
-    );*/
+    try {
+      const user = await lastValueFrom<User>(
+        this.usersClient.send<User>(
+          { cmd: 'get_or_create_user' },
+          {
+            email: userInfoResult.value.email,
+            name: userInfoResult.value.name,
+          },
+        ),
+      );
 
-    console.log(
-      `Auth done for user | ${userInfo.email} | generate session token`,
-    );
+      this.logger.log(
+        `Auth done for user | ${user.email} | generate session token`,
+      );
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error ? e.message : 'Unknown error occurred';
+      this.logger.error(`Micorservice error: ${errorMessage}`);
+
+      throw new InternalServerErrorException(
+        'Could not complete user verification at this time',
+      );
+    }
   }
 }

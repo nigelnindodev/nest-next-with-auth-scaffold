@@ -67,7 +67,7 @@ export class UsersRepository {
         `Failed to update user with external id ${externalId}`,
         e,
       );
-      return Maybe.nothing<User>();
+      return Maybe.nothing();
     }
   }
 }
