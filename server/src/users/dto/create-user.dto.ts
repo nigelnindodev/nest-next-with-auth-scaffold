@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsEmail,
   IsInt,
@@ -30,4 +30,19 @@ export class UserMetaDto {
   @IsString()
   @IsOptional()
   description?: string;
+}
+
+@Exclude()
+export class ExternalUserDetailsDto {
+  @Expose()
+  externalId: string;
+
+  @Expose()
+  email: string;
+
+  @Expose()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserMetaDto)
+  meta?: UserMetaDto | null;
 }

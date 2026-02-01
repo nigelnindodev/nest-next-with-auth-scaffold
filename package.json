@@ -10,6 +10,8 @@
     "client:start": "cd client && npm start",
     "lint:client": "cd client && npm run lint",
     "lint:server": "cd server && npm run lint",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
     "prepare": "husky"
   },
   "keywords": [],
@@ -27,6 +29,14 @@
     ],
     "server/**/*.ts": [
       "npm run lint:server"
+    ]
+  },
+  "build": {
+    "client/**/*.{js,jsx,ts,tsx}": [
+      "npm run build:client"
+    ],
+    "server/**/*.ts": [
+      "npm run build:server"
     ]
   }
 }
