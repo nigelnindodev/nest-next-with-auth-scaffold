@@ -15,6 +15,8 @@ import { OAuthToken, OAuthUserInfo } from './strategies/strategy.interface';
 import { Result } from 'true-myth';
 import { lastValueFrom } from 'rxjs';
 import { User } from 'src/users/entity/user.entity';
+import { AuthRepository } from './user.repository';
+import { CryptoService } from './crypto/crypto.service';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +25,8 @@ export class AuthService {
 
   constructor(
     private readonly oAuthStrategyService: OAuthStrategyService,
+    private readonly authRepository: AuthRepository,
+    private readonly cryptoService: CryptoService,
     private readonly redisService: RedisService,
     @Inject(USER_SERVICE) private readonly usersClient: ClientProxy,
   ) {}
@@ -110,6 +114,16 @@ export class AuthService {
           },
         ),
       );
+
+      // check from auth repository if provided email already exists
+      // If exists:
+      // - check if matches provider
+      //  - if yes:
+      //    - call crypto service to encrypt refresh token
+      //    - upsert method on repository to update refresh token
+      //    - create jwt with externalId, provider
+      //  - if no:
+      //    - already logged in by a different provider, should unaauthroze
 
       this.logger.log(
         `Auth done for user | ${user.email} | generate session token`,

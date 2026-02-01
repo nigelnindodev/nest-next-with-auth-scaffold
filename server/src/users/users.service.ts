@@ -43,10 +43,10 @@ export class UsersService {
   }
 
   async updateUser(
-    externalId: string,
-    data: Partial<Omit<User, 'email' | 'id' | 'externalId'>>,
+    data: Partial<Omit<User, 'email' | 'id' | 'externalId'>> &
+      Pick<User, 'externalId'>,
   ): Promise<Maybe<User>> {
-    this.logger.log(`Processing update for user: ${externalId}`);
-    return this.userRepository.updateUser(externalId, data);
+    this.logger.log(`Processing update for user: ${data.externalId}`);
+    return this.userRepository.updateUser(data);
   }
 }

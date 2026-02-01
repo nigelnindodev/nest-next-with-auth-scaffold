@@ -28,10 +28,10 @@ export class UsersRepository {
   async createUser(
     userData: Omit<User, 'id' | 'externalId' | 'createdAt' | 'updatedAt'>,
   ): Promise<Result<User, Error>> {
+    this.logger.log(
+      `Attempting to create new user with email ${userData.email}`,
+    );
     try {
-      this.logger.log(
-        `Attempting to create new user with email ${userData.email}`,
-      );
       const user = this.userRepository.create(userData);
       const savedUser = await this.userRepository.save(user);
       return Result.ok(savedUser);
@@ -47,15 +47,15 @@ export class UsersRepository {
   }
 
   async updateUser(
-    externalId: string,
-    userData: Partial<Omit<User, 'email' | 'id' | 'externalId'>>,
+    userData: Partial<Omit<User, 'email' | 'id' | 'externalId'>> &
+      Pick<User, 'externalId'>,
   ): Promise<Maybe<User>> {
     try {
-      const maybeUser = await this.findByExternalId(externalId);
+      const maybeUser = await this.findByExternalId(userData.externalId);
 
       if (maybeUser.isNothing) return Maybe.nothing();
 
-      this.logger.log(`Updating user with external id ${externalId}`);
+      this.logger.log(`Updating user with external id ${userData.externalId}`);
       const updatedUser = await this.userRepository.save({
         ...maybeUser.value,
         ...userData,
@@ -64,7 +64,7 @@ export class UsersRepository {
       return Maybe.of(updatedUser);
     } catch (e) {
       this.logger.error(
-        `Failed to update user with external id ${externalId}`,
+        `Failed to update user with external id ${userData.externalId}`,
         e,
       );
       return Maybe.nothing();

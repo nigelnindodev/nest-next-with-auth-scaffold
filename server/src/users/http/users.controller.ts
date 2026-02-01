@@ -32,10 +32,7 @@ export class UsersController {
       updateUserDto.externalId,
     );
 
-    const maybeUser = await this.userService.updateUser(
-      updateUserDto.externalId,
-      updateUserDto,
-    );
+    const maybeUser = await this.userService.updateUser(updateUserDto);
 
     if (maybeUser.isNothing) {
       const message = `Update failed. User with external id ${updateUserDto.externalId} not found`;

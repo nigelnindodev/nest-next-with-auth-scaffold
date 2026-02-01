@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { EncryptionKeys } from './config.types';
+import z from 'zod';
 
 @Injectable()
 export class AppConfigService extends ConfigService {
+  private readonly encryptionKeysSchema = z.object({
+    current: z.string(),
+    keys: z.record(z.string(), z.string()),
+  });
+
   get database() {
     return {
       host: this.get<string>('PG_HOST', '0.0.0.0'),
@@ -37,6 +44,7 @@ export class AppConfigService extends ConfigService {
     };
   }
 
+  // Server should not start if missing
   get googleOAuthConfiguration() {
     return {
       clientId: this.get<string>(
@@ -46,6 +54,42 @@ export class AppConfigService extends ConfigService {
       clientSecret: this.get<string>(
         'GOOGLE_OAUTH_CLIENT_SECRET',
         'SET_GOOGLE_OAUTH_CLIENT_SECRET',
+      ),
+    };
+  }
+
+  // Server should not start if missing, or incorrect format
+  get encryptionKeys(): EncryptionKeys {
+    const raw = this.get<string>('ENCRYPTION_KEYS', '');
+    let parsed: unknown;
+
+    if (!raw) {
+      throw new Error('ENCRYPTION_KEYS is not set');
+    }
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error('ENCRYPTION_KEYS is not valid JSON');
+    }
+
+    const result = this.encryptionKeysSchema.safeParse(parsed);
+    if (!result.success) {
+      throw new Error(`ENCRYPTION_KEYS invalid: ${result.error.message}`);
+    }
+    if (!result.data.keys[result.data.current]) {
+      throw new Error(
+        'ENCRYPTION_KEYS "current" must reference an existing key in "keys"',
+      );
+    }
+
+    return {
+      current: result.data.current,
+      keys: Object.fromEntries(
+        Object.entries(result.data.keys).map(([id, key]) => [
+          id,
+          Buffer.from(key, 'base64'),
+        ]),
       ),
     };
   }
