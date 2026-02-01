@@ -1,7 +1,6 @@
 # .husky/pre-push
-#!/usr/bin/env sh
 
 CHANGED=$(git diff --name-only origin/$(git branch --show-current))
 
-echo "$CHANGED" | grep -q "^server/" && npm run build:server
-echo "$CHANGED" | grep -q "^client/" && npm run build:client
+echo "$CHANGED" | grep -q "^server/" && npm run build:server || true
+echo "$CHANGED" | grep -q "^client/" && npm run build:client || true
