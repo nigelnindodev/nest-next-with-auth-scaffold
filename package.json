@@ -30,13 +30,5 @@
     "server/**/*.ts": [
       "npm run lint:server"
     ]
-  },
-  "build": {
-    "client/**/*.{js,jsx,ts,tsx}": [
-      "npm run build:client"
-    ],
-    "server/**/*.ts": [
-      "npm run build:server"
-    ]
   }
 }
