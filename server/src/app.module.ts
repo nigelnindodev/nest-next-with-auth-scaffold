@@ -11,8 +11,9 @@ import { RedisModule } from './redis';
 @Module({
   imports: [
     AppConfigModule,
+    RedisModule,
     TypeOrmModule.forRootAsync({
-      inject: [AppConfigService, RedisModule],
+      inject: [AppConfigService],
       useFactory: (configService: AppConfigService) =>
         configService.typeOrmConfig,
     }),
