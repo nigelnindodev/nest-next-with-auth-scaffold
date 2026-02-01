@@ -3,12 +3,18 @@ import { AppConfigService } from 'src/config';
 import {
   OAuthStrategy,
   OAuthToken,
+  OAuthTokenWithRefresh,
   OAuthUserInfo,
 } from '../strategy.interface';
 import { OAuthProvider } from 'src/auth/auth.types';
 import { Result } from 'true-myth';
+import {
+  GoogleGetTokenErrorResponse,
+  GoogleGetTokenResponse,
+  GoogleGetUserInfoErrorResponse,
+  GoogleGetUserInfoResponse,
+} from './types';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 @Injectable()
 export class GoogleOAuthStrategyService implements OAuthStrategy {
   readonly providerName: OAuthProvider = OAuthProvider.GOOGLE;
@@ -29,16 +35,160 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
 
   getAuthorizationUrl(state: string): string {
     this.logger.log('Request received to get authorization url');
-    throw new Error('Method not implemented.');
+
+    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    url.searchParams.append('client_id', this.clientId);
+    url.searchParams.append('redirect_uri', this.callbackUrl);
+    url.searchParams.append('response_type', 'code');
+    url.searchParams.append('scope', this.scopes.join(' '));
+    url.searchParams.append('state', state);
+    url.searchParams.append('access_type', 'offline');
+    url.searchParams.append('prompt', 'consent');
+
+    return url.toString();
   }
 
-  exchangeCodeForTokens(code: string): Promise<Result<OAuthToken, Error>> {
-    throw new Error('Method not implemented.');
+  async exchangeCodeForTokens(
+    code: string,
+  ): Promise<Result<OAuthTokenWithRefresh, Error>> {
+    this.logger.log('Exchanging authorization code for tokens');
+
+    try {
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: this.clientId,
+          client_secret: this.clientSecret,
+          redirect_uri: this.callbackUrl,
+          grant_type: 'authorization_code',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorResponse =
+          (await response.json()) as GoogleGetTokenErrorResponse;
+        const errorMessage = `${errorResponse.error} [${errorResponse.error_description || 'missing error description'}]`;
+        this.logger.error('Token exchange HTTP request failed', {
+          status: response.status,
+          error: errorMessage,
+        });
+        return Result.err(new Error(errorMessage));
+      }
+
+      const data = (await response.json()) as GoogleGetTokenResponse;
+
+      if (data.refresh_token === null || data.refresh_token === undefined) {
+        const errorMessage = `Refresh token missing in get token response for provider ${this.providerName}. Check access_type in authorization url`;
+        this.logger.error(errorMessage);
+        return Result.err(new Error(errorMessage));
+      }
+
+      this.logger.log('Successfully exchanged authorization code for tokens');
+      return Result.ok({
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        idToken: data.id_token,
+        expiresIn: data.expires_in,
+      });
+    } catch (e) {
+      this.logger.error(
+        'Token exchange failed',
+        e instanceof Error ? e.message : 'Unknown error',
+      );
+      return Result.err(
+        e instanceof Error ? e : new Error('Unknown error occurred'),
+      );
+    }
   }
 
-  getUserInformation(
+  async getUserInformation(
     accessToken: string,
   ): Promise<Result<OAuthUserInfo, Error>> {
-    throw new Error('Method not implemented.');
+    this.logger.log('Fetching user information');
+
+    try {
+      const response = await fetch(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+
+      if (!response.ok) {
+        const errorResponse =
+          (await response.json()) as GoogleGetUserInfoErrorResponse;
+        const errorMessage = `${errorResponse.error.status} [${errorResponse.error.message || 'missing error message'}]`;
+        this.logger.error('Fetch user information HTTP request failed', {
+          status: response.status,
+          error: errorMessage,
+        });
+        return Result.err(new Error(errorMessage));
+      }
+
+      const data = (await response.json()) as GoogleGetUserInfoResponse;
+
+      this.logger.log('Successfully fetched user information');
+      return Result.ok({
+        providerName: this.providerName,
+        email: data.email,
+        name: data.name,
+      });
+    } catch (e) {
+      this.logger.error(
+        'Fetch user information failed',
+        e instanceof Error ? e.message : 'Unknown error',
+      );
+      return Result.err(
+        e instanceof Error ? e : new Error('Unknown error occurred'),
+      );
+    }
+  }
+
+  async refreshAccessToken(
+    refreshToken: string,
+  ): Promise<Result<OAuthToken, Error>> {
+    this.logger.log('refreshing access token');
+
+    try {
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          refresh_token: refreshToken,
+          client_id: this.clientId,
+          client_secret: this.clientSecret,
+          grant_type: 'refresh_token',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorResponse =
+          (await response.json()) as GoogleGetTokenErrorResponse;
+        const errorMessage = `${errorResponse.error} [${errorResponse.error_description || 'missing error description'}]`;
+        this.logger.error('Refresh token exchange HTTP request failed', {
+          status: response.status,
+          error: errorMessage,
+        });
+        return Result.err(new Error(errorMessage));
+      }
+
+      const data = (await response.json()) as GoogleGetTokenResponse;
+
+      this.logger.log('Successfully refreshed access token');
+      return Result.ok({
+        accessToken: data.access_token,
+        expiresIn: data.expires_in,
+      });
+    } catch (e) {
+      this.logger.error(
+        'Refresh token exchange failed',
+        e instanceof Error ? e.message : 'Unknown error',
+      );
+      return Result.err(
+        e instanceof Error ? e : new Error('Unknown error occurred'),
+      );
+    }
   }
 }

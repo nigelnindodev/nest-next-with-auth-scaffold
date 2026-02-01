@@ -2,9 +2,11 @@ import { Result } from 'true-myth';
 
 export interface OAuthToken {
   accessToken: string;
-  refreshToken: string;
-  idToken?: string;
   expiresIn?: number;
+}
+
+export interface OAuthTokenWithRefresh extends OAuthToken {
+  refreshToken: string;
 }
 
 export interface OAuthUserInfo {
@@ -18,7 +20,11 @@ export interface OAuthStrategy {
 
   getAuthorizationUrl(state: string): string;
 
-  exchangeCodeForTokens(code: string): Promise<Result<OAuthToken, Error>>;
+  exchangeCodeForTokens(
+    code: string,
+  ): Promise<Result<OAuthTokenWithRefresh, Error>>;
+
+  refreshAccessToken(refreshToken: string): Promise<Result<OAuthToken, Error>>;
 
   getUserInformation(
     accessToken: string,
