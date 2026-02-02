@@ -10,6 +10,8 @@
     "client:start": "cd client && npm start",
     "lint:client": "cd client && npm run lint",
     "lint:server": "cd server && npm run lint",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
     "prepare": "husky"
   },
   "keywords": [],
@@ -28,8 +30,5 @@
     "server/**/*.ts": [
       "npm run lint:server"
     ]
-  },
-  "dependencies": {
-    "ioredis": "^5.9.2"
   }
 }

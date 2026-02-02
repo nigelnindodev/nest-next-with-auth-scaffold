@@ -17,7 +17,7 @@ async function bootstrap() {
   httpApp.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false, // let's bullet proof this after testing
       transform: true,
     }),
   );
@@ -30,7 +30,7 @@ async function bootstrap() {
   const redisMicroservice =
     await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       transport: Transport.REDIS,
-      options: configService.redisMicroserviceConfig,
+      options: configService.redisConfig,
     });
   await redisMicroservice.listen();
   logger.log('Redis microservice started');

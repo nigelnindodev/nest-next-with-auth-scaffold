@@ -4,6 +4,8 @@ import {
   Get,
   Param,
   Query,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCallbackDto } from './dto/auth-callback.dto';
@@ -22,15 +24,23 @@ export class AuthController {
   }
 
   @Get('validate/:provider')
-  validate(
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+    }),
+  )
+  async validate(
     @Param('provider') provider: string,
-    @Query('code') query: AuthCallbackDto,
+    @Query('') query: AuthCallbackDto,
   ) {
-    // const parsedProvider = this.parseProvider(provider);
-    if (!query.code || !query.state) {
-      // New DTO handles this case
-      throw new BadRequestException('');
-    }
+    const parsedProvider = this.parseProvider(provider);
+
+    await this.authService.handleOAuthCallback({
+      provider: parsedProvider,
+      code: query.code,
+      state: query.state,
+    });
   }
 
   private parseProvider(provider: string): OAuthProvider {

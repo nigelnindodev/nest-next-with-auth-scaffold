@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { EncryptionKeys } from './config.types';
+import z from 'zod';
 
 @Injectable()
 export class AppConfigService extends ConfigService {
+  private readonly encryptionKeysSchema = z.object({
+    current: z.string(),
+    keys: z.record(z.string(), z.string()),
+  });
+
   get database() {
     return {
       host: this.get<string>('PG_HOST', '0.0.0.0'),
@@ -30,22 +37,70 @@ export class AppConfigService extends ConfigService {
     return this.get<number>('HTTP_PORT', 5000);
   }
 
-  get redisMicroserviceConfig(): { host: string; port: number } {
+  get redisConfig(): { host: string; port: number } {
     return {
       host: this.get<string>('REDIS_HOST', 'localhost'),
       port: this.get<number>('REDIS_PORT', 6379),
     };
   }
 
-  get googleOAuthConfiguration() {
+  // Server should not start if missing
+  get googleOAuthConfiguration(): { clientId: string; clientSecret: string } {
+    const clientId = this.get<string>('GOOGLE_OAUTH_CLIENT_ID');
+    const clientSecret = this.get<string>('GOOGLE_OAUTH_CLIENT_SECRET');
+
+    if (!clientId) {
+      throw new Error('GOOGLE_OAUTH_CLIENT_ID is not set');
+    }
+    if (!clientSecret) {
+      throw new Error('GOOGLE_OAUTH_CLIENT_SECRET is not set');
+    }
     return {
-      clientId: this.get<string>(
-        'GOOGLE_OAUTH_CLIENT_ID',
-        'SET_GOOGLE_OAUTH_CLIENT_ID',
-      ),
-      clientSecret: this.get<string>(
-        'GOOGLE_OAUTH_CLIENT_SECRET',
-        'SET_GOOGLE_OAUTH_CLIENT_SECRET',
+      clientId,
+      clientSecret,
+    };
+  }
+
+  get jwtSecret(): string {
+    const jwtSecret = this.get<string>('JWT_SECERET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is not set');
+    }
+    return jwtSecret;
+  }
+
+  // Server should not start if missing, or incorrect format
+  get encryptionKeys(): EncryptionKeys {
+    const raw = this.get<string>('ENCRYPTION_KEYS', '');
+    let parsed: unknown;
+
+    if (!raw) {
+      throw new Error('ENCRYPTION_KEYS is not set');
+    }
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error('ENCRYPTION_KEYS is not valid JSON');
+    }
+
+    const result = this.encryptionKeysSchema.safeParse(parsed);
+    if (!result.success) {
+      throw new Error(`ENCRYPTION_KEYS invalid: ${result.error.message}`);
+    }
+    if (!result.data.keys[result.data.current]) {
+      throw new Error(
+        'ENCRYPTION_KEYS "current" must reference an existing key in "keys"',
+      );
+    }
+
+    return {
+      current: result.data.current,
+      keys: Object.fromEntries(
+        Object.entries(result.data.keys).map(([id, key]) => [
+          id,
+          Buffer.from(key, 'base64'),
+        ]),
       ),
     };
   }

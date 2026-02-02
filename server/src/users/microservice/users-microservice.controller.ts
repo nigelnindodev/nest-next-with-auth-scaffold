@@ -5,9 +5,10 @@ import {
   MessagePattern,
   Payload,
   RedisContext,
+  RpcException,
 } from '@nestjs/microservices';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto, UpdateUserResponseDto } from '../dto/update-user.dto';
+import { GetOrCreateUserDto } from '../dto/user.dto';
+import { User } from '../entity/user.entity';
 
 @Controller('users-microservice')
 export class UsersMicroserviceController {
@@ -15,30 +16,26 @@ export class UsersMicroserviceController {
 
   constructor(private readonly userService: UsersService) {}
 
-  @MessagePattern({ cmd: 'create_user_request' })
-  handleCreateUserRequest(
-    @Payload() data: CreateUserDto,
+  @MessagePattern({ cmd: 'get_or_create_user' })
+  async handleGetOrCreateUserRequest(
+    @Payload() data: GetOrCreateUserDto,
     @Ctx() context: RedisContext,
-  ) {
+  ): Promise<User> {
     this.logger.log(
-      `[redis-${context.getChannel()}] Received request  to create user: `,
-      data,
-    ); // mask sensitive info
-  }
+      `[redis-${context.getChannel()}] Received request to get or create user with email: `,
+      data.email,
+    );
 
-  @MessagePattern({ cmd: 'update_user_request' })
-  async handleUpdateUserRequest(
-    @Payload() data: UpdateUserDto,
-    @Ctx() context: RedisContext,
-  ): Promise<UpdateUserResponseDto> {
-    this.logger.log(
-      `[redis-${context.getChannel()}] Received request to update user: `,
-      data,
-    ); // mask sensitive info
-    return Promise.resolve({
-      email: 'placeholder@email.com',
-      externalId: 'placeholder_external_id',
-      meta: { version: 1, description: 'placeholder, description' },
+    const result = await this.userService.getOrCreateUser(data);
+
+    return result.match({
+      Just: (user) => user,
+      Nothing: () => {
+        throw new RpcException({
+          statusCode: 500,
+          message: `Could not get or create a user with email: ${data.email}`,
+        });
+      },
     });
   }
 }

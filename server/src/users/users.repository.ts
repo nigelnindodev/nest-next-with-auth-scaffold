@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './entity/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Maybe } from 'true-myth';
+import { Maybe, Result } from 'true-myth';
 
 @Injectable()
 export class UsersRepository {
+  private readonly logger = new Logger(UsersRepository.name);
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
@@ -23,7 +25,53 @@ export class UsersRepository {
     return Maybe.of(await this.userRepository.findOneBy({ externalId }));
   }
 
-  async createUser() {}
+  async createUser(
+    userData: Omit<User, 'id' | 'externalId' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Result<User, Error>> {
+    this.logger.log(
+      `Attempting to create new user with email ${userData.email}`,
+    );
+    try {
+      const user = this.userRepository.create(userData);
+      const savedUser = await this.userRepository.save(user);
 
-  async updateuser() {}
+      this.logger.log(`Created new user with email ${userData.email}`);
+      return Result.ok(savedUser);
+    } catch (e) {
+      this.logger.error(
+        `Failed to create user with email ${userData.email}`,
+        e,
+      );
+      return Result.err(
+        e instanceof Error ? e : new Error('Failed to create user'),
+      );
+    }
+  }
+
+  // Should be renamed to updateUserProfile with appropraie actions given entity changes
+  async updateUser(
+    userData: Partial<Omit<User, 'email' | 'id' | 'externalId'>> &
+      Pick<User, 'externalId'>,
+  ): Promise<Maybe<User>> {
+    try {
+      const maybeUser = await this.findByExternalId(userData.externalId);
+
+      if (maybeUser.isNothing) return Maybe.nothing();
+
+      this.logger.log(`Updating user with external id ${userData.externalId}`);
+      const updatedUser = await this.userRepository.save({
+        ...maybeUser.value,
+        ...userData,
+      });
+
+      this.logger.log(`Updated user with external Id ${userData.externalId}`);
+      return Maybe.of(updatedUser);
+    } catch (e) {
+      this.logger.error(
+        `Failed to update user with external id ${userData.externalId}`,
+        e,
+      );
+      return Maybe.nothing();
+    }
+  }
 }
