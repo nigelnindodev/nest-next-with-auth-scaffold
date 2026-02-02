@@ -34,6 +34,8 @@ export class UsersRepository {
     try {
       const user = this.userRepository.create(userData);
       const savedUser = await this.userRepository.save(user);
+
+      this.logger.log(`Created new user with email ${userData.email}`);
       return Result.ok(savedUser);
     } catch (e) {
       this.logger.error(
@@ -46,6 +48,7 @@ export class UsersRepository {
     }
   }
 
+  // Should be renamed to updateUserProfile with appropraie actions given entity changes
   async updateUser(
     userData: Partial<Omit<User, 'email' | 'id' | 'externalId'>> &
       Pick<User, 'externalId'>,
@@ -61,6 +64,7 @@ export class UsersRepository {
         ...userData,
       });
 
+      this.logger.log(`Updated user with external Id ${userData.externalId}`);
       return Maybe.of(updatedUser);
     } catch (e) {
       this.logger.error(

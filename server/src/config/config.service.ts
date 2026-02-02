@@ -45,17 +45,28 @@ export class AppConfigService extends ConfigService {
   }
 
   // Server should not start if missing
-  get googleOAuthConfiguration() {
+  get googleOAuthConfiguration(): { clientId: string; clientSecret: string } {
+    const clientId = this.get<string>('GOOGLE_OAUTH_CLIENT_ID');
+    const clientSecret = this.get<string>('GOOGLE_OAUTH_CLIENT_SECRET');
+
+    if (!clientId) {
+      throw new Error('GOOGLE_OAUTH_CLIENT_ID is not set');
+    }
+    if (!clientSecret) {
+      throw new Error('GOOGLE_OAUTH_CLIENT_SECRET is not set');
+    }
     return {
-      clientId: this.get<string>(
-        'GOOGLE_OAUTH_CLIENT_ID',
-        'SET_GOOGLE_OAUTH_CLIENT_ID',
-      ),
-      clientSecret: this.get<string>(
-        'GOOGLE_OAUTH_CLIENT_SECRET',
-        'SET_GOOGLE_OAUTH_CLIENT_SECRET',
-      ),
+      clientId,
+      clientSecret,
     };
+  }
+
+  get jwtSecret(): string {
+    const jwtSecret = this.get<string>('JWT_SECERET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is not set');
+    }
+    return jwtSecret;
   }
 
   // Server should not start if missing, or incorrect format

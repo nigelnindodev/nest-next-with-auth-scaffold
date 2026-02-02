@@ -7,9 +7,8 @@ import {
   Put,
   Req,
 } from '@nestjs/common';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { ExternalUserDetailsDto, UpdateUserProfileDto } from '../dto/user.dto';
 import { UsersService } from '../users.service';
-import { ExternalUserDetailsDto } from '../dto/create-user.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Controller('user')
@@ -26,7 +25,7 @@ export class UsersController {
   }
 
   @Put('profile')
-  async updateUser(@Req() req, @Body() updateUserDto: UpdateUserDto) {
+  async updateUser(@Req() req, @Body() updateUserDto: UpdateUserProfileDto) {
     this.logger.log(
       'Received request to update user profile with externalId: ',
       updateUserDto.externalId,
@@ -40,6 +39,7 @@ export class UsersController {
       throw new NotFoundException(message);
     }
 
+    // Clean this up, we've created a new UserProfile entity
     return plainToInstance(ExternalUserDetailsDto, maybeUser.value, {
       excludeExtraneousValues: true,
     });

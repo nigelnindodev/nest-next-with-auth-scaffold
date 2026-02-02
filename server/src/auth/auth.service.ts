@@ -11,7 +11,10 @@ import { OAuthProvider } from './auth.types';
 import { RedisService } from 'src/redis';
 import { ClientProxy } from '@nestjs/microservices';
 import { USER_SERVICE } from 'src/constants';
-import { OAuthToken, OAuthUserInfo } from './strategies/strategy.interface';
+import {
+  OAuthTokenWithRefresh,
+  OAuthUserInfo,
+} from './strategies/strategy.interface';
 import { Result } from 'true-myth';
 import { lastValueFrom } from 'rxjs';
 import { User } from 'src/users/entity/user.entity';
@@ -80,7 +83,7 @@ export class AuthService {
     const strategy = this.oAuthStrategyService.getStrategy(provider);
 
     this.logger.log(`Exchanging code for tokens with provider: ${provider}`);
-    const tokenResult: Result<OAuthToken, Error> =
+    const tokenResult: Result<OAuthTokenWithRefresh, Error> =
       await strategy.exchangeCodeForTokens(code);
     if (tokenResult.isErr) {
       this.logger.error(
@@ -105,6 +108,9 @@ export class AuthService {
     }
 
     try {
+      this.logger.log(
+        `Sending and start sync wait for get_or_create_user for email ${userInfoResult.value.email}`,
+      );
       const user = await lastValueFrom<User>(
         this.usersClient.send<User>(
           { cmd: 'get_or_create_user' },
@@ -114,16 +120,72 @@ export class AuthService {
           },
         ),
       );
+      this.logger.log(
+        `Received result for get_or_create_user for email ${userInfoResult.value.email}`,
+      );
 
-      // check from auth repository if provided email already exists
-      // If exists:
-      // - check if matches provider
-      //  - if yes:
-      //    - call crypto service to encrypt refresh token
-      //    - upsert method on repository to update refresh token
-      //    - create jwt with externalId, provider
-      //  - if no:
-      //    - already logged in by a different provider, should unaauthroze
+      const maybeExistingToken = await this.authRepository.getToken(
+        user.externalId,
+        provider,
+      );
+
+      const upsertTokenResult = await maybeExistingToken.match({
+        Just: () => {
+          this.logger.log(
+            `Updating existing token for external id ${user.externalId}`,
+          );
+          return this.authRepository.updateToken(provider, {
+            externalId: user.externalId,
+            encryptedToken: this.cryptoService
+              .encrypt(tokenResult.value.refreshToken)
+              .match({
+                Ok: (encryptedString) => encryptedString,
+                Err: (error) => {
+                  this.logger.log(
+                    'Failed to update existing token for user due to encryption error: ',
+                    error,
+                  );
+                  throw new InternalServerErrorException(
+                    'Could not complete user verification at this time',
+                  );
+                },
+              }),
+          });
+        },
+        Nothing: () => {
+          this.logger.log(
+            `Updating existing token for external id ${user.externalId}`,
+          );
+          return this.authRepository.createToken({
+            externalId: user.externalId,
+            provider,
+            encryptedToken: this.cryptoService
+              .encrypt(tokenResult.value.refreshToken)
+              .match({
+                Ok: (encryptedString) => encryptedString,
+                Err: (error) => {
+                  this.logger.log(
+                    'Failed to update existing token for user due to encryption error: ',
+                    error,
+                  );
+                  throw new InternalServerErrorException(
+                    'Could not complete user verification at this time',
+                  );
+                },
+              }),
+          });
+        },
+      });
+
+      if (upsertTokenResult.isErr) {
+        this.logger.error(
+          `Failed to save token for user ${user.externalId}`,
+          upsertTokenResult.error.message,
+        );
+        throw new InternalServerErrorException(
+          'Could not complete user verification at this time',
+        );
+      }
 
       this.logger.log(
         `Auth done for user | ${user.email} | generate session token`,

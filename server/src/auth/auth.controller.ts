@@ -4,6 +4,8 @@ import {
   Get,
   Param,
   Query,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCallbackDto } from './dto/auth-callback.dto';
@@ -22,6 +24,12 @@ export class AuthController {
   }
 
   @Get('validate/:provider')
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+    }),
+  )
   async validate(
     @Param('provider') provider: string,
     @Query('') query: AuthCallbackDto,

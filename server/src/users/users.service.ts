@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import { CreateUserDto } from './dto/create-user.dto';
+import { GetOrCreateUserDto } from './dto/user.dto';
 import { User } from './entity/user.entity';
 import { Maybe } from 'true-myth';
 
@@ -10,11 +10,8 @@ export class UsersService {
 
   constructor(private readonly userRepository: UsersRepository) {}
 
-  async createUser(data: CreateUserDto): Promise<Maybe<User>> {
-    const result = await this.userRepository.createUser({
-      ...data,
-      meta: data.meta ?? null,
-    });
+  async createUser(data: GetOrCreateUserDto): Promise<Maybe<User>> {
+    const result = await this.userRepository.createUser(data);
 
     if (result.isErr) {
       this.logger.error(`Failed to create user: ${result.error.message}`);

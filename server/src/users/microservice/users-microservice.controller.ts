@@ -7,7 +7,7 @@ import {
   RedisContext,
   RpcException,
 } from '@nestjs/microservices';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { GetOrCreateUserDto } from '../dto/user.dto';
 import { User } from '../entity/user.entity';
 
 @Controller('users-microservice')
@@ -17,12 +17,12 @@ export class UsersMicroserviceController {
   constructor(private readonly userService: UsersService) {}
 
   @MessagePattern({ cmd: 'get_or_create_user' })
-  async handleCreateUserRequest(
-    @Payload() data: CreateUserDto,
+  async handleGetOrCreateUserRequest(
+    @Payload() data: GetOrCreateUserDto,
     @Ctx() context: RedisContext,
   ): Promise<User> {
     this.logger.log(
-      `[redis-${context.getChannel()}] Received request to create or get user with email: `,
+      `[redis-${context.getChannel()}] Received request to get or create user with email: `,
       data.email,
     );
 

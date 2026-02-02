@@ -18,6 +18,7 @@ export class AuthRepository {
     externalId: string,
     provider: OAuthProvider,
   ): Promise<Maybe<Token>> {
+    this.logger.log(`Fetching token for external id ${externalId}`);
     const token = await this.tokenRepository.findOneBy({
       externalId,
       provider,
@@ -52,11 +53,16 @@ export class AuthRepository {
     provider: OAuthProvider,
     tokenData: Partial<Omit<Token, 'id' | 'user' | 'provider'>> &
       Pick<Token, 'externalId'>,
-  ): Promise<Maybe<Token>> {
+  ): Promise<Result<Token, Error>> {
     try {
       const maybeToken = await this.getToken(tokenData.externalId, provider);
 
-      if (maybeToken.isNothing) return Maybe.nothing();
+      if (maybeToken.isNothing)
+        return Result.err(
+          new Error(
+            `Update failed as token not found for external id ${tokenData.externalId}`,
+          ),
+        );
 
       this.logger.log(
         `Updating token for external id ${tokenData.externalId} and provider ${provider}`,
@@ -66,13 +72,17 @@ export class AuthRepository {
         ...tokenData,
       });
 
-      return Maybe.of(updatedToken);
+      return Result.ok(updatedToken);
     } catch (e) {
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : 'Token update failed with unknown error';
       this.logger.error(
         `Failed to update token for user with external Id ${tokenData.externalId}`,
-        e,
+        errorMessage,
       );
-      return Maybe.nothing();
+      return Result.err(new Error(errorMessage));
     }
   }
 }

@@ -13,8 +13,8 @@ import { User } from 'src/users/entity/user.entity';
 
 /**
  * Now (maybe eventually still) the token table does not support multiple sessions across devices
- * From a security standpoint, would be a good thing based on the use case
- * We could also easily add a session identifier in this table (i.e  user-agent + ip)
+ * From a security standpoint, makes it more strict
+ * We could also easily add a session identifier in this table (i.e  user-agent + ip, get device-id/generate uuid from the frontend) so that we can differentiate sessions across devices
  */
 @Index(['externalId', 'provider'])
 @Entity('tokens')

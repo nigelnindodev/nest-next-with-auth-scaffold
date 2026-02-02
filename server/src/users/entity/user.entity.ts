@@ -30,9 +30,6 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  meta: UserMeta | null;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
