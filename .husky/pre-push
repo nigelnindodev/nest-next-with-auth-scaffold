@@ -1,3 +1,5 @@
+#!/usr/bin/env sh
+
 CHANGED=$(git diff --name-only main...HEAD)
 
 # Check for server changes
