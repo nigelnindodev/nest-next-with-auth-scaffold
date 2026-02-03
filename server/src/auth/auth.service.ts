@@ -190,6 +190,11 @@ export class AuthService {
       this.logger.log(
         `Auth done for user | ${user.email} | generate session token`,
       );
+
+      return {
+        externalId: user.externalId,
+        email: user.email,
+      };
     } catch (e) {
       const errorMessage =
         e instanceof Error ? e.message : 'Unknown error occurred';

@@ -43,35 +43,10 @@ export class UsersRepository {
         e,
       );
       return Result.err(
-        e instanceof Error ? e : new Error('Failed to create user'),
+        e instanceof Error
+          ? e
+          : new Error(`Failed to create user for email ${userData.email}`),
       );
-    }
-  }
-
-  // Should be renamed to updateUserProfile with appropraie actions given entity changes
-  async updateUser(
-    userData: Partial<Omit<User, 'email' | 'id' | 'externalId'>> &
-      Pick<User, 'externalId'>,
-  ): Promise<Maybe<User>> {
-    try {
-      const maybeUser = await this.findByExternalId(userData.externalId);
-
-      if (maybeUser.isNothing) return Maybe.nothing();
-
-      this.logger.log(`Updating user with external id ${userData.externalId}`);
-      const updatedUser = await this.userRepository.save({
-        ...maybeUser.value,
-        ...userData,
-      });
-
-      this.logger.log(`Updated user with external Id ${userData.externalId}`);
-      return Maybe.of(updatedUser);
-    } catch (e) {
-      this.logger.error(
-        `Failed to update user with external id ${userData.externalId}`,
-        e,
-      );
-      return Maybe.nothing();
     }
   }
 }

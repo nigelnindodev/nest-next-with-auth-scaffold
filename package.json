@@ -10,7 +10,7 @@
     "client:start": "cd client && npm start",
     "lint:client": "cd client && npm run lint",
     "lint:server": "cd server && npm run lint",
-    "build:client": "cd client && npm run build",
+    "build:client": "cd client && NODE_ENV=production npm run build",
     "build:server": "cd server && npm run build",
     "prepare": "husky"
   },

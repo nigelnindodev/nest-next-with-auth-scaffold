@@ -1,14 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import { GetOrCreateUserDto } from './dto/user.dto';
+import { ExternalUserDetailsDto, GetOrCreateUserDto } from './dto/user.dto';
 import { User } from './entity/user.entity';
-import { Maybe } from 'true-myth';
+import { Maybe, Result } from 'true-myth';
+import { UserProfileRepository } from './user-profile.repository';
+import { UserProfile } from './entity/profile.entity';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(private readonly userRepository: UsersRepository) {}
+  constructor(
+    private readonly userRepository: UsersRepository,
+    private readonly userProfileRepository: UserProfileRepository,
+  ) {}
 
   async createUser(data: GetOrCreateUserDto): Promise<Maybe<User>> {
     const result = await this.userRepository.createUser(data);
@@ -21,8 +26,17 @@ export class UsersService {
     return Maybe.of(result.value);
   }
 
-  async getUser(externalId: string): Promise<Maybe<User>> {
-    return this.userRepository.findByExternalId(externalId);
+  async getUserProfile(
+    externalId: string,
+  ): Promise<Maybe<ExternalUserDetailsDto>> {
+    const maybeUserProfileWithUser =
+      await this.userProfileRepository.findByExternalIdWithUser(externalId);
+    return maybeUserProfileWithUser.map((userProfileWithUser) => {
+      return {
+        ...userProfileWithUser.user,
+        profile: userProfileWithUser,
+      };
+    });
   }
 
   async getOrCreateUser({
@@ -33,17 +47,91 @@ export class UsersService {
     name: string;
   }): Promise<Maybe<User>> {
     const maybeUser = await this.userRepository.findByEmail(email);
+
     return await maybeUser.match({
-      Just: (user) => Promise.resolve(Maybe.of(user)),
-      Nothing: async () => await this.createUser({ email, name }),
+      Just: async (user) => {
+        await this.ensureUserProfile(user.externalId, 'existing user');
+        return Maybe.of(user);
+      },
+      Nothing: async () => {
+        const maybeNewUser = await this.createUser({ email, name });
+
+        if (maybeNewUser.isJust) {
+          await this.ensureUserProfile(
+            maybeNewUser.value.externalId,
+            'new user',
+          );
+        }
+
+        return maybeNewUser;
+      },
     });
   }
 
   async updateUser(
-    data: Partial<Omit<User, 'email' | 'id' | 'externalId'>> &
-      Pick<User, 'externalId'>,
-  ): Promise<Maybe<User>> {
+    data: Partial<Omit<UserProfile, 'id' | 'externalId'>> &
+      Pick<UserProfile, 'externalId'>,
+  ): Promise<Maybe<ExternalUserDetailsDto>> {
     this.logger.log(`Processing update for user: ${data.externalId}`);
-    return this.userRepository.updateUser(data);
+
+    const result = await this.userProfileRepository.updateUserProfile(data);
+
+    if (result.isErr) {
+      this.logger.error(
+        `Update for user profile with external id ${data.externalId} failed`,
+      );
+      return Maybe.nothing();
+    }
+
+    // We need additional query to merge with user entity here
+    const maybeUserProfileWithUser =
+      await this.userProfileRepository.findByExternalIdWithUser(
+        data.externalId,
+      );
+    return maybeUserProfileWithUser.map((userProfileWithUser) => {
+      return {
+        ...userProfileWithUser.user,
+        profile: userProfileWithUser,
+      };
+    });
+  }
+
+  private async ensureUserProfile(
+    externalId: string,
+    context: string,
+  ): Promise<void> {
+    const profileResult = await this.getOrCreateUserProfile(externalId);
+
+    profileResult.match({
+      Ok: () => {},
+      Err: () => {
+        this.logger.warn(
+          `Failed to create user profile for ${context} with external id ${externalId}`,
+        );
+      },
+    });
+  }
+
+  private async getOrCreateUserProfile(
+    externalId: string,
+  ): Promise<Result<UserProfile, Error>> {
+    const maybeUserProfile =
+      await this.userProfileRepository.findByExternalId(externalId);
+    return await maybeUserProfile.match({
+      Just: (userProfile) => Promise.resolve(Result.ok(userProfile)),
+      Nothing: async () => {
+        const createUserProfileResult =
+          await this.userProfileRepository.createUserProfile({ externalId });
+        return createUserProfileResult.match({
+          Ok: (userProfile) => Promise.resolve(Result.ok(userProfile)),
+          Err: (e) => {
+            this.logger.error(
+              `Failed to create user profile for external id ${externalId}`,
+            );
+            return Promise.resolve(Result.err(e));
+          },
+        });
+      },
+    });
   }
 }

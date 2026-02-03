@@ -1,2 +1,3 @@
-export const USER_SERVICE = 'USER_SERVICE';
-export const REDIS_CLIENT = 'REDIS_CLIENT';
+export const USER_SERVICE = 'USER_SERVICE' as const;
+export const REDIS_CLIENT = 'REDIS_CLIENT' as const;
+export const AUTH_COOKIE_NAME = '_nexus_xborg' as const;
