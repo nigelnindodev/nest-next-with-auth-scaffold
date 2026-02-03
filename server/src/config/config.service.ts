@@ -62,7 +62,7 @@ export class AppConfigService extends ConfigService {
   }
 
   get jwtSecret(): string {
-    const jwtSecret = this.get<string>('JWT_SECERET');
+    const jwtSecret = this.get<string>('JWT_SECRET');
     if (!jwtSecret) {
       throw new Error('JWT_SECRET is not set');
     }

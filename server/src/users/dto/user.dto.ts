@@ -7,10 +7,10 @@ import {
   IsOptional,
   IsString,
   IsUrl,
-  IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { GamingPlatforms } from '../user.types';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class GetOrCreateUserDto {
   @IsEmail()
@@ -23,10 +23,6 @@ export class GetOrCreateUserDto {
 }
 
 export class UpdateUserProfileDto {
-  @IsUUID()
-  @IsNotEmpty()
-  externalId: string;
-
   @IsOptional()
   @IsString()
   bio?: string;
@@ -51,10 +47,21 @@ export class UserProfileDto {
 
   @Expose()
   @IsOptional()
+  @IsUrl()
   avatarUrl?: string;
 
   @Expose()
   @IsOptional()
+  @ApiProperty({
+    description: 'The gaming platforms the user plays on',
+    enum: GamingPlatforms,
+    isArray: true,
+    example: [
+      GamingPlatforms.PC,
+      GamingPlatforms.PLAYSTATION,
+      GamingPlatforms.NINTENDO,
+    ],
+  })
   platforms?: GamingPlatforms[];
 }
 

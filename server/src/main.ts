@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppConfigService } from './config';
+import * as cookieParser from 'cookie-parser';
+import configSwagger from './swagger';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -14,6 +16,9 @@ async function bootstrap() {
     }),
   });
 
+  configSwagger(httpApp);
+
+  httpApp.use(cookieParser());
   httpApp.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
