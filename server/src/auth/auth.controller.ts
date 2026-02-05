@@ -13,10 +13,10 @@ import { AuthService } from './auth.service';
 import { AuthCallbackDto } from './dto/auth-callback.dto';
 import { OAuthProvider } from './auth.types';
 import { Response } from 'express';
-import { JwtService } from './jwt/jwt.service';
 import { AppConfigService } from 'src/config';
 import { AUTH_COOKIE_NAME } from 'src/constants';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtService } from 'src/security/jwt/jwt.service';
 
 @Controller('auth')
 export class AuthController {

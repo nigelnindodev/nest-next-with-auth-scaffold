@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
-import { JwtService } from 'src/auth/jwt/jwt.service';
 import { AUTH_COOKIE_NAME } from 'src/constants';
+import { JwtService } from '../jwt/jwt.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
