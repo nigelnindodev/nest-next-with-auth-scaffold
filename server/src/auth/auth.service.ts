@@ -95,12 +95,15 @@ export class AuthService {
       );
     }
 
-    this.logger.log(`Fetching user information from provider: ${provider}`);
+    this.logger.log(
+      `Fetching user information from provider: ${provider} | testingTokenValue: ${tokenResult.value.accessToken}`,
+    );
     const userInfoResult: Result<OAuthUserInfo, Error> =
       await strategy.getUserInformation(tokenResult.value.accessToken);
     if (userInfoResult.isErr) {
       this.logger.error(
         `Failed to retrieve user information from provider: ${provider}`,
+        userInfoResult.error.message,
       );
       throw new UnauthorizedException(
         'Failed to retrieve user information from provider',

@@ -50,82 +50,82 @@
 :root {
   --radius: 0.75rem;
 
-  /* Dark gaming theme */
-  --background: 240 15% 6%;
-  --foreground: 210 40% 98%;
-  --card: 240 15% 9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 240 15% 9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 280 100% 65%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 195 100% 50%;
-  --secondary-foreground: 240 15% 6%;
-  --muted: 240 10% 15%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 160 100% 45%;
-  --accent-foreground: 240 15% 6%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 240 10% 20%;
-  --input: 240 10% 15%;
-  --ring: 280 100% 65%;
+  /* Dark gaming theme — all values wrapped in hsl() for Tailwind v4 */
+  --background: hsl(240 15% 6%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(240 15% 9%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(240 15% 9%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(280 100% 65%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(195 100% 50%);
+  --secondary-foreground: hsl(240 15% 6%);
+  --muted: hsl(240 10% 15%);
+  --muted-foreground: hsl(215 20% 65%);
+  --accent: hsl(160 100% 45%);
+  --accent-foreground: hsl(240 15% 6%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(240 10% 20%);
+  --input: hsl(240 10% 15%);
+  --ring: hsl(280 100% 65%);
 
   /* Chart colors */
-  --chart-1: 280 100% 65%;
-  --chart-2: 195 100% 50%;
-  --chart-3: 160 100% 45%;
-  --chart-4: 330 100% 65%;
-  --chart-5: 30 100% 55%;
+  --chart-1: hsl(280 100% 65%);
+  --chart-2: hsl(195 100% 50%);
+  --chart-3: hsl(160 100% 45%);
+  --chart-4: hsl(330 100% 65%);
+  --chart-5: hsl(30 100% 55%);
 
   /* Sidebar */
-  --sidebar: 240 15% 8%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 280 100% 65%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 10% 15%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 240 10% 20%;
-  --sidebar-ring: 280 100% 65%;
+  --sidebar: hsl(240 15% 8%);
+  --sidebar-foreground: hsl(210 40% 98%);
+  --sidebar-primary: hsl(280 100% 65%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 10% 15%);
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-border: hsl(240 10% 20%);
+  --sidebar-ring: hsl(280 100% 65%);
 
   /* Custom gaming tokens */
-  --neon-purple: 280 100% 65%;
-  --neon-cyan: 195 100% 50%;
-  --neon-green: 160 100% 45%;
-  --neon-pink: 330 100% 65%;
-  --neon-orange: 30 100% 55%;
+  --neon-purple: hsl(280 100% 65%);
+  --neon-cyan: hsl(195 100% 50%);
+  --neon-green: hsl(160 100% 45%);
+  --neon-pink: hsl(330 100% 65%);
+  --neon-orange: hsl(30 100% 55%);
 }
 
 .dark {
-  --background: 240 15% 6%;
-  --foreground: 210 40% 98%;
-  --card: 240 15% 9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 240 15% 9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 280 100% 65%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 195 100% 50%;
-  --secondary-foreground: 240 15% 6%;
-  --muted: 240 10% 15%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 160 100% 45%;
-  --accent-foreground: 240 15% 6%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 240 10% 20%;
-  --input: 240 10% 15%;
-  --ring: 280 100% 65%;
+  --background: hsl(240 15% 6%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(240 15% 9%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(240 15% 9%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(280 100% 65%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(195 100% 50%);
+  --secondary-foreground: hsl(240 15% 6%);
+  --muted: hsl(240 10% 15%);
+  --muted-foreground: hsl(215 20% 65%);
+  --accent: hsl(160 100% 45%);
+  --accent-foreground: hsl(240 15% 6%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(240 10% 20%);
+  --input: hsl(240 10% 15%);
+  --ring: hsl(280 100% 65%);
 
   /* Sidebar */
-  --sidebar: 240 15% 8%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 280 100% 65%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 10% 15%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 240 10% 20%;
-  --sidebar-ring: 280 100% 65%;
+  --sidebar: hsl(240 15% 8%);
+  --sidebar-foreground: hsl(210 40% 98%);
+  --sidebar-primary: hsl(280 100% 65%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 10% 15%);
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-border: hsl(240 10% 20%);
+  --sidebar-ring: hsl(280 100% 65%);
 }
 
 @layer base {
@@ -164,22 +164,22 @@
 
   /* Neon border */
   .neon-border {
-    border: 1px solid hsl(var(--primary));
+    border: 1px solid var(--primary);
     box-shadow:
-      0 0 5px hsl(var(--primary) / 0.3),
-      inset 0 0 5px hsl(var(--primary) / 0.1);
+      0 0 5px color-mix(in srgb, var(--primary) 30%, transparent),
+      inset 0 0 5px color-mix(in srgb, var(--primary) 10%, transparent);
   }
 
   /* Gaming gradient */
   .gradient-gaming {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   }
 
   /* Grid pattern background */
   .bg-grid-pattern {
     background-image:
-      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+      linear-gradient(color-mix(in srgb, var(--border) 30%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--border) 30%, transparent) 1px, transparent 1px);
     background-size: 50px 50px;
   }
 
@@ -215,47 +215,4 @@
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
-}
-
-/* App-specific styles */
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
 }
