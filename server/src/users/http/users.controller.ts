@@ -10,9 +10,9 @@ import {
 import { ExternalUserDetailsDto, UpdateUserProfileDto } from '../dto/user.dto';
 import { UsersService } from '../users.service';
 import { plainToInstance } from 'class-transformer';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth-gaurd';
 import { CurrentUser } from 'src/auth/decorators/current-user-decorator';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/security/guards/jwt-auth-guard';
 
 @Controller('user')
 export class UsersController {

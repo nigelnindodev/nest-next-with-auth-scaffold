@@ -7,7 +7,7 @@
     "setup:server": "cd server && npm install",
     "setup:client": "cd client && npm install",
     "server:start": "cd server && npm start",
-    "client:start": "cd client && npm start",
+    "client:start": "cd client && NODE_ENV=production npm start",
     "lint:client": "cd client && npm run lint",
     "lint:server": "cd server && npm run lint",
     "build:client": "cd client && NODE_ENV=production npm run build",

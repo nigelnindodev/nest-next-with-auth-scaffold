@@ -112,6 +112,10 @@ export class AppConfigService extends ConfigService {
     );
   }
 
+  get clientBaseUrl() {
+    return this.get<string>('CLIENT_BASE_URL', 'http://localhost:3000');
+  }
+
   get isDevelopment() {
     return this.get('NODE_ENV') === 'development';
   }

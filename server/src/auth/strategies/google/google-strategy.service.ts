@@ -137,8 +137,8 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
       });
     } catch (e) {
       this.logger.error(
-        'Fetch user information failed',
-        e instanceof Error ? e.message : 'Unknown error',
+        `Fetch user information failed | ${e instanceof Error ? e.message : 'Unknown error'}`,
+        e instanceof Error ? e.stack : e,
       );
       return Result.err(
         e instanceof Error ? e : new Error('Unknown error occurred'),

@@ -19,7 +19,7 @@ import { Result } from 'true-myth';
 import { lastValueFrom } from 'rxjs';
 import { User } from 'src/users/entity/user.entity';
 import { AuthRepository } from './user.repository';
-import { CryptoService } from './crypto/crypto.service';
+import { CryptoService } from 'src/security/crypto/crypto.service';
 
 @Injectable()
 export class AuthService {
