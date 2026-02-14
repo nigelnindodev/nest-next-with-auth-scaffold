@@ -1,10 +1,14 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
+import { toast } from '@/components/ui/sonner';
 
 export function GoogleSignInButton() {
 	const handleGoogleSignIn = () => {
-		const serverUrl = process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'http://localhost:5000';
+		const serverUrl = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
+		if (!serverUrl) {
+			toast.error('Missing NEXT_PUBLIC_SERVER_BASE_URL. Check config and try again.')
+		}
 		const authUrl = `${serverUrl}/auth/login/google`;
 
 		try {

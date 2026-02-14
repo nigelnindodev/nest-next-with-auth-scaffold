@@ -84,7 +84,7 @@ export class AuthController {
       maxAge: this.jwtService.tokenExpiryInSeconds * 1000,
     });
 
-    res.redirect(`${this.config.serverBaseUrl}/user/profile`);
+    res.redirect(`${this.config.clientBaseUrl}/user/profile`);
   }
 
   private parseProvider(provider: string): OAuthProvider {
