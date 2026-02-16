@@ -14,7 +14,6 @@ import {
   GoogleGetUserInfoErrorResponse,
   GoogleGetUserInfoResponse,
 } from './types';
-import axios from 'axios';
 
 @Injectable()
 export class GoogleOAuthStrategyService implements OAuthStrategy {
@@ -55,20 +54,30 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
     this.logger.log('Exchanging authorization code for tokens');
 
     try {
-      const { data } = await axios.post<GoogleGetTokenResponse>(
-        'https://oauth2.googleapis.com/token',
-        new URLSearchParams({
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
           code,
           client_id: this.clientId,
           client_secret: this.clientSecret,
           redirect_uri: this.callbackUrl,
           grant_type: 'authorization_code',
         }),
-        {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          timeout: 3000,
-        },
-      );
+      });
+
+      if (!response.ok) {
+        const errorResponse =
+          (await response.json()) as GoogleGetTokenErrorResponse;
+        const errorMessage = `${errorResponse.error} [${errorResponse.error_description || 'missing error description'}]`;
+        this.logger.error('Token exchange HTTP request failed', {
+          status: response.status,
+          error: errorMessage,
+        });
+        return Result.err(new Error(errorMessage));
+      }
+
+      const data = (await response.json()) as GoogleGetTokenResponse;
 
       if (data.refresh_token === null || data.refresh_token === undefined) {
         const errorMessage = `Refresh token missing in get token response for provider ${this.providerName}. Check access_type in authorization url`;
@@ -84,21 +93,9 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
         expiresIn: data.expires_in,
       });
     } catch (e) {
-      if (axios.isAxiosError<GoogleGetTokenErrorResponse>(e)) {
-        const status = e.response?.status;
-        const errorMessage = e.response?.data
-          ? `${e.response.data.error} [${e.response.data.error_description || 'missing error description'}]`
-          : e.message;
-
-        this.logger.error(
-          `Token exchange HTTP request failed | ${JSON.stringify({ status, error: errorMessage })}`,
-        );
-        return Result.err(new Error(errorMessage));
-      }
-
       this.logger.error(
-        `Token exchange failed | ${e instanceof Error ? e.message : 'Unknown error'}`,
-        e instanceof Error ? e.stack : e,
+        'Token exchange failed',
+        e instanceof Error ? e.message : 'Unknown error',
       );
       return Result.err(
         e instanceof Error ? e : new Error('Unknown error occurred'),
@@ -112,13 +109,25 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
     this.logger.log('Fetching user information');
 
     try {
-      const { data } = await axios.get<GoogleGetUserInfoResponse>(
+      const response = await fetch(
         'https://www.googleapis.com/oauth2/v3/userinfo',
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-          timeout: 30000,
         },
       );
+
+      if (!response.ok) {
+        const errorResponse =
+          (await response.json()) as GoogleGetUserInfoErrorResponse;
+        const errorMessage = `${errorResponse.error.status} [${errorResponse.error.message || 'missing error message'}]`;
+        this.logger.error('Fetch user information HTTP request failed', {
+          status: response.status,
+          error: errorMessage,
+        });
+        return Result.err(new Error(errorMessage));
+      }
+
+      const data = (await response.json()) as GoogleGetUserInfoResponse;
 
       this.logger.log('Successfully fetched user information');
       return Result.ok({
@@ -127,26 +136,6 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
         name: data.name,
       });
     } catch (e) {
-      if (axios.isAxiosError<GoogleGetUserInfoErrorResponse>(e)) {
-        const status = e.response?.status;
-        this.logger.error(
-          `Full axios error | ${JSON.stringify({
-            status: e.response?.status,
-            data: e.response?.data,
-            code: e.code,
-            message: e.message,
-          })}`,
-        );
-        const errorMessage = e.response?.data
-          ? `${e.response.data.error.status} [${e.response.data.error.message || 'missing error message'}]`
-          : e.message;
-
-        this.logger.error(
-          `Fetch user information HTTP request failed | ${JSON.stringify({ status, error: errorMessage })}`,
-        );
-        return Result.err(new Error(errorMessage));
-      }
-
       this.logger.error(
         `Fetch user information failed | ${e instanceof Error ? e.message : 'Unknown error'}`,
         e instanceof Error ? e.stack : e,
@@ -160,22 +149,32 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<Result<OAuthToken, Error>> {
-    this.logger.log('Refreshing access token');
+    this.logger.log('refreshing access token');
 
     try {
-      const { data } = await axios.post<GoogleGetTokenResponse>(
-        'https://oauth2.googleapis.com/token',
-        new URLSearchParams({
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
           refresh_token: refreshToken,
           client_id: this.clientId,
           client_secret: this.clientSecret,
           grant_type: 'refresh_token',
         }),
-        {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          timeout: 5000,
-        },
-      );
+      });
+
+      if (!response.ok) {
+        const errorResponse =
+          (await response.json()) as GoogleGetTokenErrorResponse;
+        const errorMessage = `${errorResponse.error} [${errorResponse.error_description || 'missing error description'}]`;
+        this.logger.error('Refresh token exchange HTTP request failed', {
+          status: response.status,
+          error: errorMessage,
+        });
+        return Result.err(new Error(errorMessage));
+      }
+
+      const data = (await response.json()) as GoogleGetTokenResponse;
 
       this.logger.log('Successfully refreshed access token');
       return Result.ok({
@@ -183,21 +182,9 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
         expiresIn: data.expires_in,
       });
     } catch (e) {
-      if (axios.isAxiosError<GoogleGetTokenErrorResponse>(e)) {
-        const status = e.response?.status;
-        const errorMessage = e.response?.data
-          ? `${e.response.data.error} [${e.response.data.error_description || 'missing error description'}]`
-          : e.message;
-
-        this.logger.error(
-          `Refresh token exchange HTTP request failed | ${JSON.stringify({ status, error: errorMessage })}`,
-        );
-        return Result.err(new Error(errorMessage));
-      }
-
       this.logger.error(
-        `Refresh token exchange failed | ${e instanceof Error ? e.message : 'Unknown error'}`,
-        e instanceof Error ? e.stack : e,
+        'Refresh token exchange failed',
+        e instanceof Error ? e.message : 'Unknown error',
       );
       return Result.err(
         e instanceof Error ? e : new Error('Unknown error occurred'),
