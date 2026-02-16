@@ -20,6 +20,7 @@ import { lastValueFrom } from 'rxjs';
 import { User } from 'src/users/entity/user.entity';
 import { AuthRepository } from './user.repository';
 import { CryptoService } from 'src/security/crypto/crypto.service';
+import pRetry from 'p-retry';
 
 @Injectable()
 export class AuthService {
@@ -83,6 +84,7 @@ export class AuthService {
     const strategy = this.oAuthStrategyService.getStrategy(provider);
 
     this.logger.log(`Exchanging code for tokens with provider: ${provider}`);
+
     const tokenResult: Result<OAuthTokenWithRefresh, Error> =
       await strategy.exchangeCodeForTokens(code);
     if (tokenResult.isErr) {
@@ -98,13 +100,37 @@ export class AuthService {
     this.logger.log(
       `Fetching user information from provider: ${provider} | testingTokenValue: ${tokenResult.value.accessToken}`,
     );
-    const userInfoResult: Result<OAuthUserInfo, Error> =
-      await strategy.getUserInformation(tokenResult.value.accessToken);
-    if (userInfoResult.isErr) {
+    this.logger.log(
+      `Access token length: ${tokenResult.value.accessToken.length} | preview: ${tokenResult.value.accessToken.substring(0, 20)}...`,
+    );
+
+    /**
+     * Saw this particular endpoint have intermittent failures on local testing.
+     * Suspect network issues, so use pRetry for exponential backoff
+     */
+    const getUserInformationRetry = async () => {
+      const result = await strategy.getUserInformation(
+        tokenResult.value.accessToken,
+      );
+      if (result.isErr) throw result.error;
+      return result;
+    };
+
+    let userInfo: OAuthUserInfo;
+    try {
+      const userInfoResult = await pRetry(getUserInformationRetry, {
+        retries: 5,
+        minTimeout: 300,
+        maxTimeout: 2000,
+        factor: 2,
+      });
+      userInfo = userInfoResult.value;
+    } catch (e) {
       this.logger.error(
         `Failed to retrieve user information from provider: ${provider}`,
-        userInfoResult.error.message,
+        e instanceof Error ? e.message : 'Unknown error',
       );
+
       throw new UnauthorizedException(
         'Failed to retrieve user information from provider',
       );
@@ -112,19 +138,19 @@ export class AuthService {
 
     try {
       this.logger.log(
-        `Sending and start sync wait for get_or_create_user for email ${userInfoResult.value.email}`,
+        `Sending and start sync wait for get_or_create_user for email ${userInfo.email}`,
       );
       const user = await lastValueFrom<User>(
         this.usersClient.send<User>(
           { cmd: 'get_or_create_user' },
           {
-            email: userInfoResult.value.email,
-            name: userInfoResult.value.name,
+            email: userInfo.email,
+            name: userInfo.name,
           },
         ),
       );
       this.logger.log(
-        `Received result for get_or_create_user for email ${userInfoResult.value.email}`,
+        `Received result for get_or_create_user for email ${userInfo.email}`,
       );
 
       const maybeExistingToken = await this.authRepository.getToken(
@@ -201,7 +227,7 @@ export class AuthService {
     } catch (e) {
       const errorMessage =
         e instanceof Error ? e.message : 'Unknown error occurred';
-      this.logger.error(`Micorservice error: ${errorMessage}`);
+      this.logger.error(`Microservice error: ${errorMessage}`);
 
       throw new InternalServerErrorException(
         'Could not complete user verification at this time',
