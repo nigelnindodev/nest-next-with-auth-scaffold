@@ -14,6 +14,7 @@ import {
   GoogleGetUserInfoErrorResponse,
   GoogleGetUserInfoResponse,
 } from './types';
+import pRetry from 'p-retry';
 
 @Injectable()
 export class GoogleOAuthStrategyService implements OAuthStrategy {
@@ -103,7 +104,40 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
     }
   }
 
+  /**
+   * Saw this particular endpoint have intermittent failures on local testing.
+   * Suspect network issues, so use pRetry for exponential backoff
+   */
   async getUserInformation(
+    accessToken: string,
+  ): Promise<Result<OAuthUserInfo, Error>> {
+    const getUserInformationRetry = async () => {
+      const result = await this.unsafeGetUserInformation(accessToken);
+      if (result.isErr) throw result.error;
+      return result;
+    };
+
+    let userInfo: OAuthUserInfo;
+
+    try {
+      const userInfoResult = await pRetry(getUserInformationRetry, {
+        retries: 5,
+        minTimeout: 300,
+        maxTimeout: 2000,
+        factor: 2,
+      });
+      userInfo = userInfoResult.value;
+      return Result.ok(userInfo);
+    } catch (e) {
+      this.logger.error(
+        `Failed to retrieve user information after retries`,
+        e instanceof Error ? e.message : 'Unknown error',
+      );
+      return Result.err(e);
+    }
+  }
+
+  private async unsafeGetUserInformation(
     accessToken: string,
   ): Promise<Result<OAuthUserInfo, Error>> {
     this.logger.log('Fetching user information');

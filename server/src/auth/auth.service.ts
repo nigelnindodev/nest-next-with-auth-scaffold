@@ -20,7 +20,6 @@ import { lastValueFrom } from 'rxjs';
 import { User } from 'src/users/entity/user.entity';
 import { AuthRepository } from './user.repository';
 import { CryptoService } from 'src/security/crypto/crypto.service';
-import pRetry from 'p-retry';
 
 @Injectable()
 export class AuthService {
@@ -104,37 +103,17 @@ export class AuthService {
       `Access token length: ${tokenResult.value.accessToken.length} | preview: ${tokenResult.value.accessToken.substring(0, 20)}...`,
     );
 
-    /**
-     * Saw this particular endpoint have intermittent failures on local testing.
-     * Suspect network issues, so use pRetry for exponential backoff
-     */
-    const getUserInformationRetry = async () => {
-      const result = await strategy.getUserInformation(
-        tokenResult.value.accessToken,
-      );
-      if (result.isErr) throw result.error;
-      return result;
-    };
-
-    let userInfo: OAuthUserInfo;
-    try {
-      const userInfoResult = await pRetry(getUserInformationRetry, {
-        retries: 5,
-        minTimeout: 300,
-        maxTimeout: 2000,
-        factor: 2,
-      });
-      userInfo = userInfoResult.value;
-    } catch (e) {
+    const userInfoResult: Result<OAuthUserInfo, Error> =
+      await strategy.getUserInformation(tokenResult.value.accessToken);
+    if (userInfoResult.isErr) {
       this.logger.error(
-        `Failed to retrieve user information from provider: ${provider}`,
-        e instanceof Error ? e.message : 'Unknown error',
+        `Get user information failed for provider: ${provider}`,
       );
-
       throw new UnauthorizedException(
-        'Failed to retrieve user information from provider',
+        `Failed to retrieve user information from provider: ${provider}`,
       );
     }
+    const userInfo = userInfoResult.value;
 
     try {
       this.logger.log(
