@@ -94,13 +94,9 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
         expiresIn: data.expires_in,
       });
     } catch (e) {
-      this.logger.error(
-        'Token exchange failed',
-        e instanceof Error ? e.message : 'Unknown error',
-      );
-      return Result.err(
-        e instanceof Error ? e : new Error('Unknown error occurred'),
-      );
+      const error: Error = e instanceof Error ? e : new Error('Unknown error');
+      this.logger.error('Token exchange failed', { error });
+      return Result.err(e);
     }
   }
 
@@ -129,10 +125,11 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
       userInfo = userInfoResult.value;
       return Result.ok(userInfo);
     } catch (e) {
-      this.logger.error(
-        `Failed to retrieve user information after retries`,
-        e instanceof Error ? e.message : 'Unknown error',
-      );
+      const error: Error = e instanceof Error ? e : new Error('Unknown error');
+      this.logger.error(`Failed to retrieve user information after retries`, {
+        error,
+        errorMessage: error.message,
+      });
       return Result.err(e);
     }
   }
@@ -156,7 +153,7 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
         const errorMessage = `${errorResponse.error.status} [${errorResponse.error.message || 'missing error message'}]`;
         this.logger.error('Fetch user information HTTP request failed', {
           status: response.status,
-          error: errorMessage,
+          httpErrorResponse: errorResponse,
         });
         return Result.err(new Error(errorMessage));
       }
@@ -170,13 +167,11 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
         name: data.name,
       });
     } catch (e) {
-      this.logger.error(
-        `Fetch user information failed | ${e instanceof Error ? e.message : 'Unknown error'}`,
-        e instanceof Error ? e.stack : e,
-      );
-      return Result.err(
-        e instanceof Error ? e : new Error('Unknown error occurred'),
-      );
+      const error: Error = e instanceof Error ? e : new Error('Unknown error');
+      this.logger.error(`Fetch user information failed'}`, {
+        error,
+      });
+      return Result.err(error);
     }
   }
 
@@ -216,13 +211,9 @@ export class GoogleOAuthStrategyService implements OAuthStrategy {
         expiresIn: data.expires_in,
       });
     } catch (e) {
-      this.logger.error(
-        'Refresh token exchange failed',
-        e instanceof Error ? e.message : 'Unknown error',
-      );
-      return Result.err(
-        e instanceof Error ? e : new Error('Unknown error occurred'),
-      );
+      const error: Error = e instanceof Error ? e : new Error('Unknown error');
+      this.logger.error('Refresh token exchange failed', { error });
+      return Result.err(error);
     }
   }
 }
