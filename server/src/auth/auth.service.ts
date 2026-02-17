@@ -74,7 +74,7 @@ export class AuthService {
     });
 
     if (!isStateValid) {
-      this.logger.error(`Invalid or expired state for provider: ${provider}`);
+      this.logger.error('Invalid or expired state provided', { provider });
       throw new UnauthorizedException('Invalid OAuth state provided');
     }
 
@@ -82,33 +82,29 @@ export class AuthService {
 
     const strategy = this.oAuthStrategyService.getStrategy(provider);
 
-    this.logger.log(`Exchanging code for tokens with provider: ${provider}`);
+    this.logger.log('Exchanging code for tokens', { provider });
 
     const tokenResult: Result<OAuthTokenWithRefresh, Error> =
       await strategy.exchangeCodeForTokens(code);
     if (tokenResult.isErr) {
-      this.logger.error(
-        `Token exchange failed with provider ${provider}`,
-        tokenResult.error.message,
-      );
+      this.logger.error('Token exchange failed', {
+        provider,
+        error: tokenResult.error,
+      });
       throw new UnauthorizedException(
         `Failed to authenticate with provider: ${provider}`,
       );
     }
 
-    this.logger.log(
-      `Fetching user information from provider: ${provider} | testingTokenValue: ${tokenResult.value.accessToken}`,
-    );
-    this.logger.log(
-      `Access token length: ${tokenResult.value.accessToken.length} | preview: ${tokenResult.value.accessToken.substring(0, 20)}...`,
-    );
+    this.logger.log('Fetching user information', { provider });
 
     const userInfoResult: Result<OAuthUserInfo, Error> =
       await strategy.getUserInformation(tokenResult.value.accessToken);
     if (userInfoResult.isErr) {
-      this.logger.error(
-        `Get user information failed for provider: ${provider}`,
-      );
+      this.logger.error('Get user information failed', {
+        provider,
+        errorMessage: userInfoResult.error.message,
+      });
       throw new UnauthorizedException(
         `Failed to retrieve user information from provider: ${provider}`,
       );
@@ -117,7 +113,8 @@ export class AuthService {
 
     try {
       this.logger.log(
-        `Sending and start sync wait for get_or_create_user for email ${userInfo.email}`,
+        'Sending and start synchronous wait for get_or_create_user',
+        { email: userInfo.email, provider },
       );
       const user = await lastValueFrom<User>(
         this.usersClient.send<User>(
@@ -128,9 +125,9 @@ export class AuthService {
           },
         ),
       );
-      this.logger.log(
-        `Received result for get_or_create_user for email ${userInfo.email}`,
-      );
+      this.logger.log('Received result for get_or_create_user', {
+        email: userInfo.email,
+      });
 
       const maybeExistingToken = await this.authRepository.getToken(
         user.externalId,
@@ -139,9 +136,9 @@ export class AuthService {
 
       const upsertTokenResult = await maybeExistingToken.match({
         Just: () => {
-          this.logger.log(
-            `Updating existing token for external id ${user.externalId}`,
-          );
+          this.logger.log('Updating existing token', {
+            externalId: user.externalId,
+          });
           return this.authRepository.updateToken(provider, {
             externalId: user.externalId,
             encryptedToken: this.cryptoService
@@ -151,7 +148,7 @@ export class AuthService {
                 Err: (error) => {
                   this.logger.log(
                     'Failed to update existing token for user due to encryption error: ',
-                    error,
+                    { error },
                   );
                   throw new InternalServerErrorException(
                     'Could not complete user verification at this time',
@@ -161,9 +158,9 @@ export class AuthService {
           });
         },
         Nothing: () => {
-          this.logger.log(
-            `Updating existing token for external id ${user.externalId}`,
-          );
+          this.logger.log('Updating existing token', {
+            externalId: user.externalId,
+          });
           return this.authRepository.createToken({
             externalId: user.externalId,
             provider,
@@ -174,7 +171,7 @@ export class AuthService {
                 Err: (error) => {
                   this.logger.log(
                     'Failed to update existing token for user due to encryption error: ',
-                    error,
+                    { error },
                   );
                   throw new InternalServerErrorException(
                     'Could not complete user verification at this time',
@@ -186,27 +183,26 @@ export class AuthService {
       });
 
       if (upsertTokenResult.isErr) {
-        this.logger.error(
-          `Failed to save token for user ${user.externalId}`,
-          upsertTokenResult.error.message,
-        );
+        this.logger.error(`Failed to save token for user${user.externalId}`, {
+          externalId: user.externalId,
+          error: upsertTokenResult.error,
+        });
         throw new InternalServerErrorException(
           'Could not complete user verification at this time',
         );
       }
 
-      this.logger.log(
-        `Auth done for user | ${user.email} | generate session token`,
-      );
+      this.logger.log('Auth success for user, generate session token', {
+        email: user.email,
+      });
 
       return {
         externalId: user.externalId,
         email: user.email,
       };
     } catch (e) {
-      const errorMessage =
-        e instanceof Error ? e.message : 'Unknown error occurred';
-      this.logger.error(`Microservice error: ${errorMessage}`);
+      const error = e instanceof Error ? e : new Error('Unknown error');
+      this.logger.error('Microservice error', { error });
 
       throw new InternalServerErrorException(
         'Could not complete user verification at this time',

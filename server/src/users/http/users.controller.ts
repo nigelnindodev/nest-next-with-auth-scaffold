@@ -38,7 +38,7 @@ export class UsersController {
 
     if (maybeUserProfileDetails.isNothing) {
       const errorMessage = `User details with external id ${externalId} not found`;
-      this.logger.warn(errorMessage);
+      this.logger.warn('User details not found', { externalId });
       throw new NotFoundException(errorMessage);
     }
 
@@ -70,10 +70,7 @@ export class UsersController {
     @CurrentUser('sub') externalId: string,
     @Body() updateUserDto: UpdateUserProfileDto,
   ) {
-    this.logger.log(
-      'Received request to update user profile with externalId: ',
-      externalId,
-    );
+    this.logger.log('Received request to update user profile', { externalId });
 
     const maybeUser = await this.userService.updateUser({
       ...updateUserDto,
@@ -82,7 +79,7 @@ export class UsersController {
 
     if (maybeUser.isNothing) {
       const message = `Update failed. User with external id ${externalId} not found`;
-      this.logger.warn(message);
+      this.logger.warn('Update failed. User not found', { externalId });
       throw new NotFoundException(message);
     }
 
