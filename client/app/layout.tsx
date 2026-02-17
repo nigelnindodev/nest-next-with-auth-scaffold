@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Nexus App",
-  description: "Nexus App For Xborg",
+  description: "Nexus App",
 };
 
 export default function RootLayout({
