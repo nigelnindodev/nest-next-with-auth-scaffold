@@ -19,7 +19,10 @@ export class UsersService {
     const result = await this.userRepository.createUser(data);
 
     if (result.isErr) {
-      this.logger.error(`Failed to create user: ${result.error.message}`);
+      this.logger.error('Failed to create user', {
+        email: data.email,
+        error: result.error,
+      });
       return Maybe.nothing();
     }
 
@@ -72,14 +75,17 @@ export class UsersService {
     data: Partial<Omit<UserProfile, 'id' | 'externalId'>> &
       Pick<UserProfile, 'externalId'>,
   ): Promise<Maybe<ExternalUserDetailsDto>> {
-    this.logger.log(`Processing update for user: ${data.externalId}`);
+    this.logger.log('Processing update details request for user', {
+      externalId: data.externalId,
+    });
 
     const result = await this.userProfileRepository.updateUserProfile(data);
 
     if (result.isErr) {
-      this.logger.error(
-        `Update for user profile with external id ${data.externalId} failed`,
-      );
+      this.logger.error(`Update for user profile failed`, {
+        externalId: data.externalId,
+        error: result.error,
+      });
       return Maybe.nothing();
     }
 
@@ -105,9 +111,9 @@ export class UsersService {
     profileResult.match({
       Ok: () => {},
       Err: () => {
-        this.logger.warn(
-          `Failed to create user profile for ${context} with external id ${externalId}`,
-        );
+        this.logger.warn(`Failed to create user profile for ${context}`, {
+          externalId,
+        });
       },
     });
   }
@@ -125,9 +131,7 @@ export class UsersService {
         return createUserProfileResult.match({
           Ok: (userProfile) => Promise.resolve(Result.ok(userProfile)),
           Err: (e) => {
-            this.logger.error(
-              `Failed to create user profile for external id ${externalId}`,
-            );
+            this.logger.error('Failed to create user profile', { externalId });
             return Promise.resolve(Result.err(e));
           },
         });

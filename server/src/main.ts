@@ -1,20 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppConfigService } from './config';
 import * as cookieParser from 'cookie-parser';
 import configSwagger from './swagger';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
-
   const httpApp = await NestFactory.create(AppModule, {
-    logger: new ConsoleLogger({
-      json: true,
-      colors: process.env.NODE_ENV === 'production' ? false : true,
-    }),
+    bufferLogs: true,
   });
+
+  const logger = httpApp.get(Logger);
+  httpApp.useLogger(logger);
 
   httpApp.enableCors({
     origin: 'http://localhost:3000', // new env var for this
@@ -36,7 +35,7 @@ async function bootstrap() {
   const configService = httpApp.get(AppConfigService);
   const httpPort = configService.httpPort;
   await httpApp.listen(httpPort);
-  logger.log('HTTP application started on port: ', httpPort);
+  logger.log('HTTP application started', { port: httpPort });
 
   const redisMicroservice =
     await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
@@ -46,4 +45,4 @@ async function bootstrap() {
   await redisMicroservice.listen();
   logger.log('Redis microservice started');
 }
-bootstrap();
+void bootstrap();
