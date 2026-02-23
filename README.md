@@ -2,10 +2,20 @@
 
 This is a comprehensive monorepo application featuring a **Next.js** client and a **NestJS** server. It is designed as a **robust scaffold for future projects**, establishing sane defaults and best practices for scalable application development.
 
+Comprehensive architecture and design details can be found at [DeepWiki](https://deepwiki.com/nigelnindodev/nest-next-with-auth-scaffold)
+
 Key features include:
 *   **Microservices Architecture**: Ready-to-use microservice setup (e.g., Redis).
 *   **Authentication**: A complete database structure and logic for authentication built from the ground up.
 *   **Containerization**: Full Docker & Docker Compose setup.
+
+The frontend contains a working example of Sign In via Google (OAuth 2), with an app that allows for updating of a users bio:
+
+<img width="1364" height="655" alt="Screenshot from 2026-02-23 11-05-17" src="https://github.com/user-attachments/assets/2e445c3b-ee4f-41e1-8640-e2e30e6ca5ca" />
+
+<img width="1364" height="655" alt="Screenshot from 2026-02-23 11-03-38" src="https://github.com/user-attachments/assets/222ce98b-97f2-450f-bb11-871e8736a0ba" />
+
+<img width="1364" height="691" alt="Screenshot from 2026-02-23 11-35-24" src="https://github.com/user-attachments/assets/d797d5f0-f58a-41cc-af41-662ec79f4759" />
 
 ## Project Structure
 
